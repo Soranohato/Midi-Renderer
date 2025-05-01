@@ -38,14 +38,57 @@ def fixTimeStamps(result):
 
             timeElapsed += deltaTime
 
-
+            # update "start" to seconds from ticks
             result[track][currentNoteIndex]["start"] = timeElapsed
             currentNoteIndex += 1
 
                 
-                
+def fixDuration(result):
+    for track in result.keys():
+        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+            continue
 
+        # sort by note ends
+        result[track] = sorted(result[track], key=lambda note: note["end"])
 
+        # track the tempo while iterating over each note, then convert
+        # the timestamps into seconds (for Godot purposes!!)
+        tempotrack = result["Tempo"]
+        currentTempo = tempotrack[0]["tempo"]
+        currentTempoIndex = 0
+        currentNoteIndex = 0
+        ticksElapsed = 0
+        timeElapsed = 0
+
+        # formula for getting note start time
+        for note in result[track]:
+            deltaTime = 0
+
+            # move forward to the next tempo change event
+            while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["end"]:
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+
+                ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
+
+                # advance past the tempo change
+                currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
+                currentTempoIndex += 1
+            
+            deltaTime += tick2second(note["end"] - ticksElapsed, 1024, currentTempo)
+            ticksElapsed = note["end"]
+
+            timeElapsed += deltaTime
+
+            # update "end" to seconds from ticks
+            result[track][currentNoteIndex]["end"] = timeElapsed
+
+            #update "duration" to length of note in seconds
+            result[track][currentNoteIndex]["duration"] = result[track][currentNoteIndex]["end"] - result[track][currentNoteIndex]["start"]
+            
+            currentNoteIndex += 1  
+
+        # convert back to sorted by start
+        result[track] = sorted(result[track], key=lambda note: note["start"])          
 
 def parseMidi(filename):
     output = defaultdict(list)
@@ -95,15 +138,16 @@ def parseMidi(filename):
                 if noteVal in activeNotes and activeNotes[noteVal]:
                     startTime = activeNotes[noteVal].pop(0)
                     duration = totalTime - startTime
-
+                    endTime = startTime + duration
                     # convert into seconds
                     # ()
 
 
                     output[currInstrument].append({
                         "start": startTime,
+                        "end": endTime,
                         "duration": duration,
-                        "midiValue:": noteVal
+                        "midiValue": noteVal
                     })
 
         # converts tempo markings to BPM, puts it in the json
@@ -154,8 +198,9 @@ def main():
     print(midiTxt)
     result = parseMidi("trackOutput.txt")
     fixTimeStamps(result)
+    fixDuration(result)
 
-    outputFile = "fixedtimeseconds.json"
+    outputFile = "sortedEnd.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
