@@ -1,8 +1,51 @@
-from mido import MidiFile
+from mido import MidiFile, tick2second
 import json
 import re
 import sys
 from collections import defaultdict
+
+def fixTimeStamps(result):
+    for track in result.keys():
+        # skip over the keys that aren't midi tracks
+        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+            continue
+
+        # track the tempo while iterating over each note, then convert
+        # the timestamps into seconds (for Godot purposes!!)
+        tempotrack = result["Tempo"]
+        currentTempo = tempotrack[0]["tempo"]
+        currentTempoIndex = 0
+        currentNoteIndex = 0
+        ticksElapsed = 0
+        timeElapsed = 0
+
+        # formula for getting note start time
+        for note in result[track]:
+            deltaTime = 0
+
+            # move forward to the next tempo change event
+            while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["start"]:
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+
+                ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
+
+                # advance past the tempo change
+                currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
+                currentTempoIndex += 1
+            
+            deltaTime += tick2second(note["start"] - ticksElapsed, 1024, currentTempo)
+            ticksElapsed = note["start"]
+
+            timeElapsed += deltaTime
+
+
+            result[track][currentNoteIndex]["start"] = timeElapsed
+            currentNoteIndex += 1
+
+                
+                
+
+
 
 def parseMidi(filename):
     output = defaultdict(list)
@@ -13,24 +56,29 @@ def parseMidi(filename):
 
     with open(filename, "r") as f:
         lines = f.readlines()
-
+    
     for line in lines:
         line = line.strip()
 
+        # Resets start time and instrument for each track
         if line.startswith('MidiTrack(['):
             totalTime = 0
             currInstrument = None
             activeNotes = {}
 
+        # tracks total elapsed time
         timeMatch = re.search(r'time=(\d+)', line)
         deltaTime = int(timeMatch.group(1)) if timeMatch else 0
         totalTime += deltaTime
 
+        # Finds the name of the current track
         if "track_name" in line:
             nameMatch = re.search(r"name='([^']+)'", line)
             if nameMatch:
                 currInstrument = nameMatch.group(1)
 
+        # Detects start of a new note and adds it to a list until
+        # its corresponding note_off is found
         if "note_on" in line and "velocity=0" not in line:
             totalNotes += 1
             noteMatch = re.search(r'note=(\d+)', line)
@@ -38,6 +86,8 @@ def parseMidi(filename):
                 noteVal = int(noteMatch.group(1))
                 activeNotes.setdefault(noteVal, []).append(totalTime)
 
+        # Finds the corresponding note_on and removes it to the list of active
+        # notes if a match is found and then adds it and its length to the json
         if "note_off" in line or ("note_on" in line and "velocity=0" in line):
             noteMatch = re.search(r'note=(\d+)', line)
             if noteMatch and currInstrument:
@@ -45,22 +95,30 @@ def parseMidi(filename):
                 if noteVal in activeNotes and activeNotes[noteVal]:
                     startTime = activeNotes[noteVal].pop(0)
                     duration = totalTime - startTime
+
+                    # convert into seconds
+                    # ()
+
+
                     output[currInstrument].append({
                         "start": startTime,
                         "duration": duration,
                         "midiValue:": noteVal
                     })
 
+        # converts tempo markings to BPM, puts it in the json
         if "set_tempo" in line:
             tempoMatch = re.search(r'tempo=(\d+)', line)
             if tempoMatch:
                 tempoVal = int(tempoMatch.group(1))
-                tempoVal = 1 / tempoVal * 1000000 * 60 # tempo starts as microseconds per beat -> reciprocal -> beats per sec -> BPM
+                # tempo starts as microseconds per beat -> reciprocal -> beats per sec -> BPM
+                # tempoVal = 1 / tempoVal * 1000000 * 60
                 output["Tempo"].append({
                     "start": totalTime,
-                    "BPM": tempoVal
+                    "tempo": tempoVal
                 })
-
+        
+        # find the time signature, put it in the json
         if "time_signature" in line:
             numMatch = re.search(r'numerator=(\d+)', line)
             denMatch = re.search(r'denominator=(\d+)', line)
@@ -93,9 +151,11 @@ def main():
 
     midiIn = sys.argv[1]
     midiTxt = createTxt(midiIn)
+    print(midiTxt)
     result = parseMidi("trackOutput.txt")
+    fixTimeStamps(result)
 
-    outputFile = "output.json"
+    outputFile = "fixedtimeseconds.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
