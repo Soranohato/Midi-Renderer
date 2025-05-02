@@ -88,7 +88,70 @@ def fixDuration(result):
             currentNoteIndex += 1  
 
         # convert back to sorted by start
-        result[track] = sorted(result[track], key=lambda note: note["start"])          
+        result[track] = sorted(result[track], key=lambda note: note["start"])
+
+def fixTempoTime(result):
+    for track in result.keys():
+        if track in ["TimeSig"]:
+            tempotrack = result["Tempo"]
+            currentTempo = tempotrack[0]["tempo"]
+            currentTempoIndex = 0
+            currentSigIndex = 0
+            ticksElapsed = 0
+            timeElapsed = 0
+
+            for tempo in result[track]:
+                deltaTime = 0
+
+                # advance to next tempo change event
+                while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
+                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+
+                    ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
+
+                    # advance past the tempo change
+                    currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
+                    currentTempoIndex += 1
+
+                deltaTime += tick2second(tempo["start"] - ticksElapsed, 1024, currentTempo)
+                ticksElapsed = tempo["start"]
+
+                timeElapsed += deltaTime
+
+                # update "start" to seconds from ticks
+                result[track][currentSigIndex]["start"] = timeElapsed
+                currentSigIndex += 1
+
+        elif track in ["Tempo"]:
+            tempotrack = result["Tempo"]
+            currentTempo = tempotrack[0]["tempo"]
+            currentTempoIndex = 0
+            ticksElapsed = 0
+            timeElapsed = 0
+
+            for tempo in result[track]:
+                deltaTime = 0
+
+                # advance to next tempo change event
+                while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
+                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+
+                    ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
+
+                    # advance past the tempo change
+                    currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
+                    currentTempoIndex += 1
+
+                deltaTime += tick2second(tempo["start"] - ticksElapsed, 1024, currentTempo)
+                ticksElapsed = tempo["start"]
+
+                timeElapsed += deltaTime
+
+                # update "start" to seconds from ticks
+                result[track][currentTempoIndex]["start"] = timeElapsed
+
+        else:
+            continue
 
 def parseMidi(filename):
     output = defaultdict(list)
@@ -199,8 +262,9 @@ def main():
     result = parseMidi("trackOutput.txt")
     fixTimeStamps(result)
     fixDuration(result)
+    fixTempoTime(result)
 
-    outputFile = "sortedEnd.json"
+    outputFile = "fixedtemposig.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
