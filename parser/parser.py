@@ -153,6 +153,19 @@ def fixTempoTime(result):
         else:
             continue
 
+# Updates Tempo to BPM
+def convertTempo(result):
+    for track in result.keys():
+        if track in ["Tempo"]:
+            currTempoIndex = 0
+
+            for tempo in result[track]:
+                # tempo starts as microseconds per beat -> reciprocal -> beats per sec -> BPM
+                tempoVal = result[track][currTempoIndex]["tempo"]
+                tempoVal = 1 / tempoVal * 1000000 * 60
+                result[track][currTempoIndex]["tempo"] = tempoVal
+                currTempoIndex += 1
+
 def parseMidi(filename):
     output = defaultdict(list)
     currInstrument = None
@@ -263,8 +276,9 @@ def main():
     fixTimeStamps(result)
     fixDuration(result)
     fixTempoTime(result)
+    convertTempo(result)
 
-    outputFile = "fixedtemposig.json"
+    outputFile = "output.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
