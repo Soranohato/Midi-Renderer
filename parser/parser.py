@@ -7,7 +7,7 @@ from collections import defaultdict
 def fixTimeStamps(result):
     for track in result.keys():
         # skip over the keys that aren't midi tracks
-        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
             continue
 
         # track the tempo while iterating over each note, then convert
@@ -45,7 +45,7 @@ def fixTimeStamps(result):
                 
 def fixDuration(result):
     for track in result.keys():
-        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
             continue
 
         # sort by note ends
@@ -179,6 +179,7 @@ def addMeasureNum(result):
 
     # Build list of measure start times
     measure_times = []  # Each entry: (start_time_sec, measure_number)
+    measure_start = [] # the measure starts for godot
     current_time = 0.0
     measure_number = 1
     current_ts = time_sigs[0]
@@ -193,7 +194,7 @@ def addMeasureNum(result):
         return tick2second(ticks, ticks_per_beat, tempo)
 
     # Iterate until you exceed the max time found in notes
-    max_time = max(note["start"] for tr in result if tr not in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"] for note in result[tr])
+    max_time = max(note["start"] for tr in result if tr not in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"] for note in result[tr])
     while current_time < max_time + 1:
         beats_per_measure = current_ts["numerator"]
         beat_note = current_ts["denominator"]
@@ -201,6 +202,7 @@ def addMeasureNum(result):
         ticks_per_measure = ticks_per_beat * beats_per_measure * beat_length
         duration = ticks_to_sec(ticks_per_measure, current_tempo["tempo"])
         measure_times.append((current_time, measure_number))
+        measure_start.append(current_time)
 
         # Advance time
         current_time += duration
@@ -218,7 +220,7 @@ def addMeasureNum(result):
 
     # Assign each note a measure number
     for track in result:
-        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
             continue
         for note in result[track]:
             note_time = note["start"]
@@ -231,6 +233,8 @@ def addMeasureNum(result):
                         break
                 else:
                     note["measure"] = meas_num
+
+    result["MeasureStart"] = measure_start
 
 
 def parseMidi(filename):
@@ -334,6 +338,7 @@ def parseMidi(filename):
         "high": noteHigh,
         "low": noteLow
     })
+    output["MeasureStart"].append([])
 
     return dict(output)
 
