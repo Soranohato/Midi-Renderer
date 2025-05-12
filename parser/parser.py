@@ -7,7 +7,7 @@ from collections import defaultdict
 def fixTimeStamps(result):
     for track in result.keys():
         # skip over the keys that aren't midi tracks
-        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
             continue
 
         # track the tempo while iterating over each note, then convert
@@ -45,7 +45,7 @@ def fixTimeStamps(result):
                 
 def fixDuration(result):
     for track in result.keys():
-        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
             continue
 
         # sort by note ends
@@ -172,6 +172,8 @@ def parseMidi(filename):
     activeNotes = {}
     totalTime = 0
     totalNotes = 0
+    noteLow = 127
+    noteHigh = 0
 
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -203,6 +205,13 @@ def parseMidi(filename):
             noteMatch = re.search(r'note=(\d+)', line)
             if noteMatch and currInstrument:
                 noteVal = int(noteMatch.group(1))
+
+                # adjust midi note range
+                if (noteVal < noteLow and noteVal > 21):
+                    noteLow = noteVal
+                if (noteVal > noteHigh):
+                    noteHigh = noteVal
+
                 activeNotes.setdefault(noteVal, []).append(totalTime)
 
         # Finds the corresponding note_on and removes it to the list of active
@@ -254,6 +263,10 @@ def parseMidi(filename):
     output["TotalNotes"].append({
         "TotalNotes": totalNotes
     })
+    output["NoteRange"].append({
+        "high": noteHigh,
+        "low": noteLow
+    })
 
     return dict(output)
 
@@ -278,7 +291,7 @@ def main():
     fixTempoTime(result)
     convertTempo(result)
 
-    outputFile = "output.json"
+    outputFile = "output2.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
