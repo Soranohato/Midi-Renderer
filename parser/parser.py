@@ -166,6 +166,73 @@ def convertTempo(result):
                 result[track][currTempoIndex]["tempo"] = tempoVal
                 currTempoIndex += 1
 
+def addMeasureNum(result):
+    """
+    Adds 'measure' field to each note, indicating which measure (0-based) the note starts in.
+    """
+    time_sigs = sorted(result.get("TimeSig", []), key=lambda x: x["start"])
+    tempos = sorted(result.get("Tempo", []), key=lambda x: x["start"])
+
+    if not time_sigs or not tempos:
+        print("Missing time signature or tempo data. Cannot compute measures.")
+        return
+
+    # Build list of measure start times
+    measure_times = []  # Each entry: (start_time_sec, measure_number)
+    current_time = 0.0
+    measure_number = 1
+    current_ts = time_sigs[0]
+    current_tempo = tempos[0]
+    ts_ptr = 1
+    tempo_ptr = 1
+
+    # For converting ticks to seconds
+    ticks_per_beat = 1024
+
+    def ticks_to_sec(ticks, tempo):
+        return tick2second(ticks, ticks_per_beat, tempo)
+
+    # Iterate until you exceed the max time found in notes
+    max_time = max(note["start"] for tr in result if tr not in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"] for note in result[tr])
+    while current_time < max_time + 1:
+        beats_per_measure = current_ts["numerator"]
+        beat_note = current_ts["denominator"]
+        beat_length = 4 / beat_note  # how long is one beat, relative to quarter note
+        ticks_per_measure = ticks_per_beat * beats_per_measure * beat_length
+        duration = ticks_to_sec(ticks_per_measure, current_tempo["tempo"])
+        measure_times.append((current_time, measure_number))
+
+        # Advance time
+        current_time += duration
+        measure_number += 1
+
+        # Check for time signature change
+        if ts_ptr < len(time_sigs) and current_time >= time_sigs[ts_ptr]["start"]:
+            current_ts = time_sigs[ts_ptr]
+            ts_ptr += 1
+
+        # Check for tempo change
+        if tempo_ptr < len(tempos) and current_time >= tempos[tempo_ptr]["start"]:
+            current_tempo = tempos[tempo_ptr]
+            tempo_ptr += 1
+
+    # Assign each note a measure number
+    for track in result:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange"]:
+            continue
+        for note in result[track]:
+            note_time = note["start"]
+            for i in range(len(measure_times)):
+                start_time, meas_num = measure_times[i]
+                if i + 1 < len(measure_times):
+                    next_start = measure_times[i + 1][0]
+                    if start_time <= note_time < next_start:
+                        note["measure"] = meas_num
+                        break
+                else:
+                    note["measure"] = meas_num
+
+
 def parseMidi(filename):
     output = defaultdict(list)
     currInstrument = None
@@ -288,6 +355,7 @@ def main():
     result = parseMidi("trackOutput.txt")
     fixTimeStamps(result)
     fixDuration(result)
+    addMeasureNum(result)
     fixTempoTime(result)
     convertTempo(result)
 
