@@ -5,7 +5,7 @@ This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
 
-const MEASURELEN = 3.69230769231
+const MEASURELEN = 3.69230769231# 2.181818181
 var MEASURE_STARTS = []
 # const MEASURE_STARTS = [0, 3.69, 7.38, 11.07]
 const TRACK_NAME = "Flute"
@@ -78,7 +78,7 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 			newnote.position = Vector2(note_x, note_y)
 			newnote.target_width = note_visual_len
 			newnote.note_rect.size.x = 0
-			newnote.visible = true
+			newnote.note_rect.visible = true
 			
 			# set up the animation params of the new note
 			newnote.starttime = notestart

@@ -6,6 +6,9 @@ const OUT_ANIM_TIME = 0.2
 @onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
 
 @onready var note_rect = $ColorRect
+@onready var particle = $particle
+
+var fired = false
 
 @onready var is_alloc = false
 var index : int
@@ -17,10 +20,10 @@ var endtime # time at which the note reaches full length
 var deathtime # time at which the note should disappear from the screen (usually at the start of next measure)
 
 func _ready():
-	visible = false
+	note_rect.visible = false
 
 func _on_timestamp_update(timestamp : float) -> void:
-	if not visible:
+	if not note_rect.visible:
 		return
 	
 	var t = (timestamp - starttime) / (endtime - starttime)
@@ -42,6 +45,12 @@ func _on_timestamp_update(timestamp : float) -> void:
 		note_rect.position.x = 0
 		note_rect.size = Vector2(lerped_size, note_rect.size.y)
 	
+	# particles emit once
+	if timestamp < starttime:
+		fired = false
+	elif not fired:
+		particle.restart()
+		fired = true
 
 
 func custom_interpolate(a,b,t,f)->float:
@@ -62,7 +71,7 @@ func deactivate():
 	var conductor_signal : Signal = conductor.update_song_timestamp
 	conductor_signal.disconnect(_on_timestamp_update)
 	
-	visible = false
+	note_rect.visible = false
 	get_parent().free_note(index)
 
 func connect_to_conductor():

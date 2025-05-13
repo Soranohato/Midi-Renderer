@@ -1,6 +1,6 @@
 extends Control
 
-const NOTES_TO_START = 3
+const NOTES_TO_START = 50
 const VIEW_WIDTH = 1890
 const VIEW_HEIGHT = 865
 const NoteScene = preload("res://Note.tscn")

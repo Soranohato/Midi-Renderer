@@ -1,6 +1,32 @@
-[gd_scene load_steps=2 format=3 uid="uid://hvlo5co0rbis"]
+[gd_scene load_steps=8 format=3 uid="uid://hvlo5co0rbis"]
 
 [ext_resource type="Script" uid="uid://dldai7w7su0uc" path="res://scripts/note.gd" id="1_m01oh"]
+[ext_resource type="Texture2D" uid="uid://bpj0nblp4mo46" path="res://flare_01.png" id="2_pmjlu"]
+
+[sub_resource type="Curve" id="Curve_m01oh"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.126536, 0.361955), 0.0, 0.0, 0, 0, Vector2(0.219902, 0.985224), -0.332776, -0.332776, 0, 0, Vector2(0.386978, 0.905972), 0.0, 0.0, 0, 0, Vector2(0.512285, 0.480161), 0.0, 0.0, 0, 0, Vector2(0.648649, 0.787766), 0.0, 0.0, 0, 0, Vector2(0.766585, 0.192705), 0.0, 0.0, 0, 0, Vector2(0.859951, 0.575532), 0.0, 0.0, 0, 0, Vector2(1, 0), -0.0523835, 0.0, 0, 0]
+point_count = 9
+
+[sub_resource type="CurveTexture" id="CurveTexture_pmjlu"]
+curve = SubResource("Curve_m01oh")
+
+[sub_resource type="Curve" id="Curve_pmjlu"]
+_data = [Vector2(0, 0.99194), 0.0, 0.0, 0, 0, Vector2(0.163391, 0.967762), 0.0, 0.0, 0, 0, Vector2(0.34398, 0.521802), 0.0, 0.0, 0, 0, Vector2(0.652334, 0.767617), 0.0, 0.0, 0, 0, Vector2(0.986486, 0.011366), 0.0, 0.0, 0, 0]
+point_count = 5
+
+[sub_resource type="CurveTexture" id="CurveTexture_6st8q"]
+curve = SubResource("Curve_pmjlu")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_6st8q"]
+particle_flag_disable_z = true
+initial_velocity_max = 242.12
+angular_velocity_min = -93.6
+angular_velocity_max = 90.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.1
+scale_max = 0.2
+alpha_curve = SubResource("CurveTexture_pmjlu")
+emission_curve = SubResource("CurveTexture_6st8q")
 
 [node name="Note" type="Control"]
 layout_mode = 3
@@ -9,8 +35,15 @@ script = ExtResource("1_m01oh")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 0
-offset_left = 17.0
 offset_top = -4.0
-offset_right = 140.0
+offset_right = 123.0
 offset_bottom = 4.0
 color = Color(0.4316, 0.83, 0.48472, 1)
+
+[node name="particle" type="GPUParticles2D" parent="."]
+emitting = false
+amount = 4
+texture = ExtResource("2_pmjlu")
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_6st8q")
