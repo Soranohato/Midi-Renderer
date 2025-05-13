@@ -4,6 +4,8 @@ import re
 import sys
 from collections import defaultdict
 
+TICKS_PER_BEAT = 480
+
 def fixTimeStamps(result):
     for track in result.keys():
         # skip over the keys that aren't midi tracks
@@ -25,7 +27,7 @@ def fixTimeStamps(result):
 
             # move forward to the next tempo change event
             while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["start"]:
-                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
 
                 ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -33,7 +35,7 @@ def fixTimeStamps(result):
                 currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                 currentTempoIndex += 1
             
-            deltaTime += tick2second(note["start"] - ticksElapsed, 1024, currentTempo)
+            deltaTime += tick2second(note["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
             ticksElapsed = note["start"]
 
             timeElapsed += deltaTime
@@ -66,7 +68,7 @@ def fixDuration(result):
 
             # move forward to the next tempo change event
             while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["end"]:
-                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
 
                 ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -74,7 +76,7 @@ def fixDuration(result):
                 currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                 currentTempoIndex += 1
             
-            deltaTime += tick2second(note["end"] - ticksElapsed, 1024, currentTempo)
+            deltaTime += tick2second(note["end"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
             ticksElapsed = note["end"]
 
             timeElapsed += deltaTime
@@ -105,7 +107,7 @@ def fixTempoTime(result):
 
                 # advance to next tempo change event
                 while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
-                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
 
                     ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -113,7 +115,7 @@ def fixTempoTime(result):
                     currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                     currentTempoIndex += 1
 
-                deltaTime += tick2second(tempo["start"] - ticksElapsed, 1024, currentTempo)
+                deltaTime += tick2second(tempo["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
                 ticksElapsed = tempo["start"]
 
                 timeElapsed += deltaTime
@@ -134,7 +136,7 @@ def fixTempoTime(result):
 
                 # advance to next tempo change event
                 while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
-                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, 1024, currentTempo)
+                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
 
                     ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -142,7 +144,7 @@ def fixTempoTime(result):
                     currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                     currentTempoIndex += 1
 
-                deltaTime += tick2second(tempo["start"] - ticksElapsed, 1024, currentTempo)
+                deltaTime += tick2second(tempo["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
                 ticksElapsed = tempo["start"]
 
                 timeElapsed += deltaTime
@@ -200,8 +202,6 @@ def addMeasureNum(result):
 
                 #check if time sig has been adjusted and adjust accordingly
                 if (currTimeSigIndex + 1 < len(result["TimeSig"]) and currTime + 0.01 >= result["TimeSig"][currTimeSigIndex + 1]["start"]):
-                    print(currNumerator)
-                    print(len(measureStarts))
                     currTimeSigIndex += 1
                     currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
                     currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
@@ -243,6 +243,12 @@ def parseMidi(filename):
         timeMatch = re.search(r'time=(\d+)', line)
         deltaTime = int(timeMatch.group(1)) if timeMatch else 0
         totalTime += deltaTime
+
+        # Finds the name of the current track
+        if "ticks_per_beat" in line:
+            global TICKS_PER_BEAT
+            ticksperbeatmatch = re.search(r"ticks_per_beat=(\d+)", line)
+            TICKS_PER_BEAT = int(ticksperbeatmatch.group(1))
 
         # Finds the name of the current track
         if "track_name" in line:
@@ -326,26 +332,22 @@ def parseMidi(filename):
 def createTxt(filepath):
     mid = MidiFile(filename=filepath, clip=True)
     with open("trackOutput.txt", "w") as f:
-        for msg in mid.tracks:
-            f.write(str(msg))
-            f.write("\n")
+        f.write(str(mid))
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python parser.py <input.mid>")
+    if len(sys.argv) != 3:
+        print("Usage: python parser.py <input.mid> <output.json")
         sys.exit(1)
 
     midiIn = sys.argv[1]
-    midiTxt = createTxt(midiIn)
-    print(midiTxt)
+    outputFile = sys.argv[2]
+    createTxt(midiIn)
     result = parseMidi("trackOutput.txt")
     fixTimeStamps(result)
     fixDuration(result)
     fixTempoTime(result)
     convertTempo(result)
     addMeasureNum(result)
-
-    outputFile = "output2.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
