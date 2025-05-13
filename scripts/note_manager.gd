@@ -10,6 +10,7 @@ const DEFAULT_COLOR = Color("6ed47c")
 
 @export var note_pool : Node
 @export var track_colors : Array[Color]
+@export var tracks_to_use : Array[String]
 
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
@@ -20,11 +21,14 @@ var noterange
 func _ready()->void:
 	loadedmidi = load_json("res://parser/output2.json")
 	
-	for track in loadedmidi.keys():
-		if track in METADATA_TRACKS:
-			continue
-		
-		TRACK_NAMES.append(track)
+	if tracks_to_use.is_empty():
+		for track in loadedmidi.keys():
+			if track in METADATA_TRACKS:
+				continue
+			
+			TRACK_NAMES.append(track)
+	else:
+		TRACK_NAMES = tracks_to_use
 		
 	
 	# initialize the note index of each track
@@ -102,7 +106,7 @@ func generate_notes(measurestart, measureend, track_index):
 		var notepitch = loadedmidi[track_name][currentnote]["midiValue"]
 		
 		# skip notes that are "control" notes
-		if notepitch < 21: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
+		if notepitch < loadedmidi["NoteRange"][0]['low']: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
 			currentnote += 1
 			continue
 		
