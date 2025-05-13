@@ -278,7 +278,7 @@ def main():
     fixTempoTime(result)
     convertTempo(result)
 
-    outputFile = "output.json"
+    outputFile = "montunomidi.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)

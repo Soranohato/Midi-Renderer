@@ -5,8 +5,10 @@ This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
 
-const MEASURE_STARTS = [0, 3.69, 7.38, 11.07]
-const TRACK_NAME = "Clarinet in Bb"
+const MEASURELEN = 3.69230769231
+var MEASURE_STARTS = []
+# const MEASURE_STARTS = [0, 3.69, 7.38, 11.07]
+const TRACK_NAME = "Flute"
 const NOTERANGE = 90
 
 @export var note_pool : Node
@@ -17,6 +19,8 @@ const NOTERANGE = 90
 var loadedmidi
 
 func _ready()->void:
+	for x in range(8):
+		MEASURE_STARTS.append(x * MEASURELEN)
 	loadedmidi = load_json("res://parser/output.json")
 	
 func load_json(path: String) -> Dictionary:
@@ -52,7 +56,7 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		
 		var notescreated = 0
 		
-		while loadedmidi[TRACK_NAME][currentnote]["start"] < measureend: # index OoB error possible on notes array
+		while currentnote < loadedmidi[TRACK_NAME].size() and loadedmidi[TRACK_NAME][currentnote]["start"] < measureend: # index OoB error possible on notes array
 			var notestart = loadedmidi[TRACK_NAME][currentnote]["start"]
 			var notelen = loadedmidi[TRACK_NAME][currentnote]["duration"]
 			var noteend = loadedmidi[TRACK_NAME][currentnote]["end"]

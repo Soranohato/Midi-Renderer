@@ -20,20 +20,29 @@ func _ready():
 	visible = false
 
 func _on_timestamp_update(timestamp : float) -> void:
+	if not visible:
+		return
+	
 	var t = (timestamp - starttime) / (endtime - starttime)
 	t = clampf(t,0.0,1.0)
 	
 	# before death time, slide the note away towards the right
-	if timestamp > deathtime - OUT_ANIM_TIME and timestamp < deathtime:
+	if timestamp > deathtime:
+		deactivate()
+	# If there is enough time before death time, slide the note away towards the right
+	elif timestamp > deathtime - OUT_ANIM_TIME and timestamp < deathtime:
 		var death_t = 1 - ((deathtime - timestamp) / OUT_ANIM_TIME)
+		
+		note_rect.position.x = 0
+		note_rect.size = Vector2(target_width, note_rect.size.y)
 		set_note_size_right(custom_interpolate(target_width, 0, death_t, 5))
 	else: 
 		var lerped_size = custom_interpolate(0.0, target_width, t, 0.33)
 		
+		note_rect.position.x = 0
 		note_rect.size = Vector2(lerped_size, note_rect.size.y)
 	
-	if timestamp > deathtime:
-		deactivate()
+
 
 func custom_interpolate(a,b,t,f)->float:
 	return lerp(float(a), float(b), pow(t, f))
@@ -49,13 +58,12 @@ func set_note_size_right(newsize: float) -> void:
 
 # de-allocate the note from the pool and also prevent it from receiving conductor updates
 func deactivate():
-	visible = false
-	get_parent().free_note(index)
-	
 	# attempt to disconnect this note from the conductor (putting the note to sleep until it is allocated again)
 	var conductor_signal : Signal = conductor.update_song_timestamp
-	if conductor_signal.is_connected(_on_timestamp_update):
-		conductor_signal.disconnect(_on_timestamp_update)
+	conductor_signal.disconnect(_on_timestamp_update)
+	
+	visible = false
+	get_parent().free_note(index)
 
 func connect_to_conductor():
 	var conductor_signal : Signal = conductor.update_song_timestamp
