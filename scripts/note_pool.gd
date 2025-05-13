@@ -1,6 +1,6 @@
 extends Control
 
-const NOTES_TO_START = 50
+const NOTES_TO_START = 3
 const VIEW_WIDTH = 1890
 const VIEW_HEIGHT = 865
 const NoteScene = preload("res://Note.tscn")
@@ -37,7 +37,8 @@ func allocate_note() -> Node:
 		
 		add_child(scene)
 		objs.append(scene)
-		objs.is_alloc = true
+		objs[i].is_alloc = true
+		print(objs.size())
 		return scene
 		
 	else:

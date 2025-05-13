@@ -1,5 +1,7 @@
 extends Control
 
+const OUT_ANIM_TIME = 0.2
+
 # keep reference to conductor node
 @onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
 
@@ -21,17 +23,29 @@ func _on_timestamp_update(timestamp : float) -> void:
 	var t = (timestamp - starttime) / (endtime - starttime)
 	t = clampf(t,0.0,1.0)
 	
-	var lerped_size = custom_interpolate(0.0, target_width, t)
-	
-	note_rect.size = Vector2(lerped_size, note_rect.size.y)
+	# before death time, slide the note away towards the right
+	if timestamp > deathtime - OUT_ANIM_TIME and timestamp < deathtime:
+		var death_t = 1 - ((deathtime - timestamp) / OUT_ANIM_TIME)
+		set_note_size_right(custom_interpolate(target_width, 0, death_t, 5))
+	else: 
+		var lerped_size = custom_interpolate(0.0, target_width, t, 0.33)
+		
+		note_rect.size = Vector2(lerped_size, note_rect.size.y)
 	
 	if timestamp > deathtime:
 		deactivate()
-		
-func custom_interpolate(a,b,t)->float:
-	var value = lerp(a,b,pow(t, 0.33))
+
+func custom_interpolate(a,b,t,f)->float:
+	return lerp(float(a), float(b), pow(t, f))
 	
-	return clampf(value, a, b)
+# set the size but keep the right edge where it is
+func set_note_size_right(newsize: float) -> void:
+	var clampedsize = max(newsize, 0)
+	var rightedge = note_rect.position.x + note_rect.size.x
+	note_rect.size = Vector2(clampedsize, note_rect.size.y)
+	
+	note_rect.position.x = rightedge - clampedsize
+	
 
 # de-allocate the note from the pool and also prevent it from receiving conductor updates
 func deactivate():
