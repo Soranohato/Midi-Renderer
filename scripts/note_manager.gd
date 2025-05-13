@@ -4,24 +4,20 @@ extends Control
 This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
-
-const MEASURELEN = 3.69230769231# 2.181818181
-var MEASURE_STARTS = []
-# const MEASURE_STARTS = [0, 3.69, 7.38, 11.07]
 const TRACK_NAME = "Flute"
-const NOTERANGE = 90
 
 @export var note_pool : Node
 
-@onready var currentmeasure = -1 # represents the index of the current measure
+@onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnote = 0 # represents the index of the next note to be generated
 
 var loadedmidi
+var noterange
 
 func _ready()->void:
-	for x in range(8):
-		MEASURE_STARTS.append(x * MEASURELEN)
-	loadedmidi = load_json("res://parser/output.json")
+	loadedmidi = load_json("res://parser/output2.json")
+	
+	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -40,23 +36,36 @@ func load_json(path: String) -> Dictionary:
 
 func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 	# (TEMPORARY FIX: DO NOT GENERATE NOTES PAST THE PLACEHOLDER MEASURE ENDS)
-	if currentmeasure + 2 >= MEASURE_STARTS.size():
-		return
+	var measurestart
+	var measureend
+	var measurelen
+	if currentmeasure + 2 < loadedmidi["MeasureStart"].size():
+		measurestart = loadedmidi["MeasureStart"][currentmeasure]
+		measureend = loadedmidi["MeasureStart"][currentmeasure + 1]
+		measurelen = measureend - measurestart
+	else:
+		# extrapolate the measure start and end based on the last 2 values
+		# of the measures array
+		var measures_size = loadedmidi["MeasureStart"].size()
+		measurestart = loadedmidi["MeasureStart"][measures_size - 2]
+		measureend = loadedmidi["MeasureStart"][measures_size - 1]
+		measurelen = measureend - measurestart
+		
+		var measuresover = currentmeasure - (measures_size - 1)
+		measurestart += measurelen * measuresover
+		measureend += measurelen * measuresover
 	
 	# check if the current frame has moved past the next measure (and generate the notes if so)
-	if current_timestamp > MEASURE_STARTS[currentmeasure + 1]:
+	if current_timestamp > measurestart:
 		# the current timestamp exceeds the current measure's end. Generate new notes and increment
 		# the current measure!
 		currentmeasure += 1
 		
 		# generate all notes that are in this measure
-		var measurestart = MEASURE_STARTS[currentmeasure]
-		var measureend = MEASURE_STARTS[currentmeasure + 1]
-		var measurelen = measureend - measurestart
-		
 		var notescreated = 0
 		
-		while currentnote < loadedmidi[TRACK_NAME].size() and loadedmidi[TRACK_NAME][currentnote]["start"] < measureend: # index OoB error possible on notes array
+		while currentnote < loadedmidi[TRACK_NAME].size() and loadedmidi[TRACK_NAME][currentnote]["start"] < measureend - 0.055: # index OoB error possible on notes array
+			# print("generated note number " + str(currentnote))
 			var notestart = loadedmidi[TRACK_NAME][currentnote]["start"]
 			var notelen = loadedmidi[TRACK_NAME][currentnote]["duration"]
 			var noteend = loadedmidi[TRACK_NAME][currentnote]["end"]
@@ -71,7 +80,7 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 			
 			# calculate the values in visual space (relative to the note pool view)
 			var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
-			var note_y =  ((111 - notepitch) / NOTERANGE) * note_pool.VIEW_HEIGHT
+			var note_y =  ((111 - notepitch) / noterange) * note_pool.VIEW_HEIGHT
 			var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
 			
 			# position the note in viewport space
@@ -84,6 +93,7 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 			newnote.starttime = notestart
 			newnote.endtime = noteend
 			newnote.deathtime = measureend
+			newnote.fired = false
 			
 			# set up the newnote as a listener for the conductor
 			newnote.connect_to_conductor()
@@ -93,3 +103,4 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 			
 			currentnote += 1
 		print("created " + str(notescreated) + " notes!")
+		print("(measure " + str(currentmeasure) + ")")

@@ -49,6 +49,7 @@ func _on_timestamp_update(timestamp : float) -> void:
 	if timestamp < starttime:
 		fired = false
 	elif not fired:
+		particle.emitting = true
 		particle.restart()
 		fired = true
 
