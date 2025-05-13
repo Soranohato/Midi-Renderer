@@ -4,17 +4,21 @@ extends Control
 This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
-const TRACK_NAME = "Flute"
+const TRACK_NAMES = ["Flute", "Clarinet in Bb"]
 
 @export var note_pool : Node
 
 @onready var currentmeasure = 0 # represents the index of the current measure
-@onready var currentnote = 0 # represents the index of the next note to be generated
+@onready var currentnotes = [] # represents the index of the next note to be generated
 
 var loadedmidi
 var noterange
 
 func _ready()->void:
+	# initialize the note index of each track
+	for x in TRACK_NAMES:
+		currentnotes.append(0)
+	
 	loadedmidi = load_json("res://parser/output2.json")
 	
 	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
@@ -62,45 +66,58 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		currentmeasure += 1
 		
 		# generate all notes that are in this measure
-		var notescreated = 0
+		for track_index in range(TRACK_NAMES.size()):
+			generate_notes(measurestart, measureend, track_index)
 		
-		while currentnote < loadedmidi[TRACK_NAME].size() and loadedmidi[TRACK_NAME][currentnote]["start"] < measureend - 0.055: # index OoB error possible on notes array
-			# print("generated note number " + str(currentnote))
-			var notestart = loadedmidi[TRACK_NAME][currentnote]["start"]
-			var notelen = loadedmidi[TRACK_NAME][currentnote]["duration"]
-			var noteend = loadedmidi[TRACK_NAME][currentnote]["end"]
-			var notepitch = loadedmidi[TRACK_NAME][currentnote]["midiValue"]
-			
-			# skip notes that are "control" notes
-			if notepitch < 21: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
-				currentnote += 1
-				continue
-			
-			var newnote = note_pool.allocate_note()
-			
-			# calculate the values in visual space (relative to the note pool view)
-			var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
-			var note_y =  ((111 - notepitch) / noterange) * note_pool.VIEW_HEIGHT
-			var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
-			
-			# position the note in viewport space
-			newnote.position = Vector2(note_x, note_y)
-			newnote.target_width = note_visual_len
-			newnote.note_rect.size.x = 0
-			newnote.note_rect.visible = true
-			
-			# set up the animation params of the new note
-			newnote.starttime = notestart
-			newnote.endtime = noteend
-			newnote.deathtime = measureend
-			newnote.fired = false
-			
-			# set up the newnote as a listener for the conductor
-			newnote.connect_to_conductor()
-			
-			notescreated += 1
-			
-			
+
+# Generate all the notes for a measure given the track name and the start and end times of the measure
+func generate_notes(measurestart, measureend, track_index):
+	var notescreated = 0
+	var measurelen = measureend - measurestart
+	
+	var track_name = TRACK_NAMES[track_index]
+	var currentnote = currentnotes[track_index]
+	
+	while currentnote < loadedmidi[track_name].size() and loadedmidi[track_name][currentnote]["start"] < measureend - 0.055: # index OoB error possible on notes array
+		# print("generated note number " + str(currentnote))
+		var notestart = loadedmidi[track_name][currentnote]["start"]
+		var notelen = loadedmidi[track_name][currentnote]["duration"]
+		var noteend = loadedmidi[track_name][currentnote]["end"]
+		var notepitch = loadedmidi[track_name][currentnote]["midiValue"]
+		
+		# skip notes that are "control" notes
+		if notepitch < 21: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
 			currentnote += 1
-		print("created " + str(notescreated) + " notes!")
-		print("(measure " + str(currentmeasure) + ")")
+			continue
+		
+		var newnote = note_pool.allocate_note()
+		
+		# calculate the values in visual space (relative to the note pool view)
+		var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
+		var note_y =  ((111 - notepitch) / noterange) * note_pool.VIEW_HEIGHT
+		var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
+		
+		# position the note in viewport space
+		newnote.position = Vector2(note_x, note_y)
+		newnote.target_width = note_visual_len
+		newnote.note_rect.size.x = 0
+		newnote.note_rect.visible = true
+		
+		# set up the animation params of the new note
+		newnote.starttime = notestart
+		newnote.endtime = noteend
+		newnote.deathtime = measureend
+		newnote.fired = false
+		
+		# set up the newnote as a listener for the conductor
+		newnote.connect_to_conductor()
+		
+		notescreated += 1
+		
+		
+		currentnote += 1
+	
+	currentnotes[track_index] = currentnote
+	
+	print("created " + str(notescreated) + " notes!")
+	print("(measure " + str(currentmeasure) + ")")
