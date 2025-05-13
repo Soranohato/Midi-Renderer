@@ -1,6 +1,80 @@
-[gd_scene load_steps=2 format=3 uid="uid://bfq8b16shrhx7"]
+[gd_scene load_steps=7 format=3 uid="uid://bfq8b16shrhx7"]
 
-[ext_resource type="Script" uid="uid://d0lm13v8oysl" path="res://scripts/parse_json.gd" id="1_0411k"]
+[ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
+[ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
+[ext_resource type="AudioStream" uid="uid://b53g1xe7usf1c" path="res://parser/Morphogenetic Sorrow 2.wav" id="2_wn8ut"]
+[ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
+[ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
+[ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
 
-[node name="Node2D" type="Node2D"]
-script = ExtResource("1_0411k")
+[node name="Window" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1152.0
+offset_bottom = -648.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_02nmi")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -6917.0
+offset_top = -5918.0
+offset_right = 22436.0
+offset_bottom = 10707.0
+color = Color(0.1922, 0.31, 0.30411, 1)
+
+[node name="Conductor" type="Node" parent="." groups=["conductor"]]
+script = ExtResource("2_8amj3")
+
+[node name="song" type="AudioStreamPlayer" parent="Conductor"]
+stream = ExtResource("2_wn8ut")
+
+[node name="NoteManager" type="Control" parent="." node_paths=PackedStringArray("note_pool")]
+anchors_preset = 0
+script = ExtResource("3_8amj3")
+note_pool = NodePath("../NotePool")
+
+[node name="NotePool" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 15.0
+offset_top = 103.0
+offset_right = 1905.0
+offset_bottom = 968.0
+script = ExtResource("4_c5pbs")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="RendererLabel" type="RichTextLabel" parent="HUD"]
+offset_left = 15.0
+offset_top = 15.0
+offset_right = 880.0
+offset_bottom = 101.0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 36
+text = "Alex and Rishu's Amazing Note Renderer
+(AaRANR)"
+
+[node name="Timer" type="RichTextLabel" parent="HUD"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -253.0
+offset_top = -91.0
+offset_right = -15.0
+offset_bottom = -15.0
+grow_horizontal = 0
+grow_vertical = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 65
+text = "45.0"
+horizontal_alignment = 2
+vertical_alignment = 1
+script = ExtResource("6_d881s")
+
+[connection signal="update_song_timestamp" from="Conductor" to="NoteManager" method="_on_conductor_update_song_timestamp"]
+[connection signal="update_song_timestamp" from="Conductor" to="HUD/Timer" method="_on_conductor_update_song_timestamp"]

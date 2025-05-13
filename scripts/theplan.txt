@@ -1,0 +1,23 @@
+===== THE PLAN =====
+
+Conductor DONE:
+	 - Holds the current timestamp of the song
+	 - contains the audio node playing the music
+	 - Sends out a signal every frame of the current timestamp
+	
+NoteManager:
+	 - Read in the json (or take in the json data from the parser obj)
+
+NotePool:
+	 - Holds references to every note in the runtime env and instantiates new
+	nodes when necessary
+
+Note:
+	 - timestart
+	 - timedeath
+	 - Is the code inside each individual note
+	 - Receives the conductor's signal and appropriately moves or hides
+	 or shows itself based on the current timestamp
+	 - Fancy particle FX go here
+
+======================
