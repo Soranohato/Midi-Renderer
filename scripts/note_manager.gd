@@ -4,7 +4,8 @@ extends Control
 This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
-const TRACK_NAMES = ["Flute", "Clarinet in Bb", "Glockenspiel", "Vibraphone", "Marimba", "Bass Clarinet"]
+const METADATA_TRACKS = ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]
+var TRACK_NAMES = []
 const DEFAULT_COLOR = Color("6ed47c")
 
 @export var note_pool : Node
@@ -17,11 +18,19 @@ var loadedmidi
 var noterange
 
 func _ready()->void:
+	loadedmidi = load_json("res://parser/output2.json")
+	
+	for track in loadedmidi.keys():
+		if track in METADATA_TRACKS:
+			continue
+		
+		TRACK_NAMES.append(track)
+		
+	
 	# initialize the note index of each track
 	for x in TRACK_NAMES:
 		currentnotes.append(0)
 	
-	loadedmidi = load_json("res://parser/output2.json")
 	
 	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
 	

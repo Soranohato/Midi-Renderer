@@ -36,7 +36,7 @@ stream = ExtResource("2_wn8ut")
 anchors_preset = 0
 script = ExtResource("3_8amj3")
 note_pool = NodePath("../NotePool")
-track_colors = Array[Color]([Color(0.653575, 0.51926, 0.674765, 1), Color(0.341129, 0.652389, 0.734637, 1), Color(0.364129, 0.629851, 0.507168, 1), Color(0.824343, 0.545337, 0.525215, 1), Color(0.676439, 0.444253, 0.275058, 1), Color(0.560086, 0.540055, 0.206226, 1), Color(1, 1, 1, 1)])
+track_colors = Array[Color]([Color(0.770555, 0.379034, 0.877586, 1), Color(0.2749, 0.658906, 0.75752, 1), Color(0.364129, 0.629851, 0.507168, 1), Color(0.934945, 0.477603, 0.391726, 1), Color(0.975947, 0.521412, 0, 1), Color(0.919297, 0.734894, 0, 1), Color(0.121509, 0.647147, 0.812613, 1)])
 
 [node name="NotePool" type="Control" parent="."]
 anchors_preset = 0

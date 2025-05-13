@@ -7,6 +7,7 @@ const OUT_ANIM_TIME = 0.2
 
 @onready var note_rect = $ColorRect
 @onready var particle = $particle
+@onready var circle = $circle
 
 var fired = false
 
@@ -51,6 +52,10 @@ func _on_timestamp_update(timestamp : float) -> void:
 	elif not fired:
 		particle.emitting = true
 		particle.restart()
+		
+		circle.emitting = true
+		circle.restart()
+		
 		fired = true
 
 
