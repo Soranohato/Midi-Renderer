@@ -4,9 +4,11 @@ extends Control
 This class will be used to generate notes based on the json data. It will call
 upon the NotePool to instantiate notes.
 """
-const TRACK_NAMES = ["Flute", "Clarinet in Bb"]
+const TRACK_NAMES = ["Flute", "Clarinet in Bb", "Glockenspiel", "Vibraphone", "Marimba", "Bass Clarinet"]
+const DEFAULT_COLOR = Color("6ed47c")
 
 @export var note_pool : Node
+@export var track_colors : Array[Color]
 
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
@@ -78,6 +80,11 @@ func generate_notes(measurestart, measureend, track_index):
 	var track_name = TRACK_NAMES[track_index]
 	var currentnote = currentnotes[track_index]
 	
+	var notecolor = DEFAULT_COLOR
+	
+	if track_colors.size() != 0:
+		notecolor = track_colors[track_index % track_colors.size()]
+	
 	while currentnote < loadedmidi[track_name].size() and loadedmidi[track_name][currentnote]["start"] < measureend - 0.055: # index OoB error possible on notes array
 		# print("generated note number " + str(currentnote))
 		var notestart = loadedmidi[track_name][currentnote]["start"]
@@ -108,6 +115,7 @@ func generate_notes(measurestart, measureend, track_index):
 		newnote.endtime = noteend
 		newnote.deathtime = measureend
 		newnote.fired = false
+		newnote.note_rect.color = notecolor
 		
 		# set up the newnote as a listener for the conductor
 		newnote.connect_to_conductor()
