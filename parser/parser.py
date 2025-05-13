@@ -162,79 +162,60 @@ def convertTempo(result):
             for tempo in result[track]:
                 # tempo starts as microseconds per beat -> reciprocal -> beats per sec -> BPM
                 tempoVal = result[track][currTempoIndex]["tempo"]
-                tempoVal = 1 / tempoVal * 1000000 * 60
+                tempoVal = round(1 / tempoVal * 1000000 * 60, 0)
                 result[track][currTempoIndex]["tempo"] = tempoVal
                 currTempoIndex += 1
 
 def addMeasureNum(result):
-    """
-    Adds 'measure' field to each note, indicating which measure (0-based) the note starts in.
-    """
-    time_sigs = sorted(result.get("TimeSig", []), key=lambda x: x["start"])
-    tempos = sorted(result.get("Tempo", []), key=lambda x: x["start"])
+    currTimeSigIndex = 0
+    currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
+    currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
+    measureStarts = [0.0]
+    beatsSinceBarLine = 0
+    currTime = 0
+    currTempo = result["Tempo"][0]["tempo"]
 
-    if not time_sigs or not tempos:
-        print("Missing time signature or tempo data. Cannot compute measures.")
-        return
+    for tempoChange in result["Tempo"]:
+        deltaTime = tempoChange["start"] - currTime
+        deltaBeats = deltaTime / (60 / currTempo) # trust that the tempo matches the denominator
 
-    # Build list of measure start times
-    measure_times = []  # Each entry: (start_time_sec, measure_number)
-    measure_start = [] # the measure starts for godot
-    current_time = 0.0
-    measure_number = 1
-    current_ts = time_sigs[0]
-    current_tempo = tempos[0]
-    ts_ptr = 1
-    tempo_ptr = 1
+        # If bar line has not been crossed
+        if (beatsSinceBarLine + deltaBeats < currNumerator):
+            beatsSinceBarLine += deltaBeats
+            currTime += deltaTime
+        # bar line has been crossed
+        else:
+            while (True):
+                beatsLeft = currNumerator - beatsSinceBarLine
+                secondsLeft = beatsLeft * (60 / currTempo) # calculate remaining time in measure
 
-    # For converting ticks to seconds
-    ticks_per_beat = 1024
+                # if there are no bar lines left break
+                if (deltaBeats < beatsLeft):
+                    break
 
-    def ticks_to_sec(ticks, tempo):
-        return tick2second(ticks, ticks_per_beat, tempo)
+                deltaBeats -= beatsLeft
+                beatsSinceBarLine = 0
+                currTime += secondsLeft
+                measureStarts.append(currTime)
 
-    # Iterate until you exceed the max time found in notes
-    max_time = max(note["start"] for tr in result if tr not in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"] for note in result[tr])
-    while current_time < max_time + 1:
-        beats_per_measure = current_ts["numerator"]
-        beat_note = current_ts["denominator"]
-        beat_length = 4 / beat_note  # how long is one beat, relative to quarter note
-        ticks_per_measure = ticks_per_beat * beats_per_measure * beat_length
-        duration = ticks_to_sec(ticks_per_measure, current_tempo["tempo"])
-        measure_times.append((current_time, measure_number))
-        measure_start.append(current_time)
+                #check if time sig has been adjusted and adjust accordingly
+                if (currTimeSigIndex + 1 < len(result["TimeSig"]) and currTime + 0.01 >= result["TimeSig"][currTimeSigIndex + 1]["start"]):
+                    print(currNumerator)
+                    print(len(measureStarts))
+                    currTimeSigIndex += 1
+                    currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
+                    currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
 
-        # Advance time
-        current_time += duration
-        measure_number += 1
+        currTempo = tempoChange["tempo"]
 
-        # Check for time signature change
-        if ts_ptr < len(time_sigs) and current_time >= time_sigs[ts_ptr]["start"]:
-            current_ts = time_sigs[ts_ptr]
-            ts_ptr += 1
+    # finish last bar
+    beatsLeft = currNumerator - beatsSinceBarLine
+    secondsLeft = beatsLeft * (60 / currTempo) # calculate remaining time in measure
+    measureStarts.append(currTime + secondsLeft)
 
-        # Check for tempo change
-        if tempo_ptr < len(tempos) and current_time >= tempos[tempo_ptr]["start"]:
-            current_tempo = tempos[tempo_ptr]
-            tempo_ptr += 1
+    # insert measure starts in JSON
+    result["MeasureStart"] = measureStarts
 
-    # Assign each note a measure number
-    for track in result:
-        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
-            continue
-        for note in result[track]:
-            note_time = note["start"]
-            for i in range(len(measure_times)):
-                start_time, meas_num = measure_times[i]
-                if i + 1 < len(measure_times):
-                    next_start = measure_times[i + 1][0]
-                    if start_time <= note_time < next_start:
-                        note["measure"] = meas_num
-                        break
-                else:
-                    note["measure"] = meas_num
-
-    result["MeasureStart"] = measure_start
 
 
 def parseMidi(filename):
@@ -360,9 +341,9 @@ def main():
     result = parseMidi("trackOutput.txt")
     fixTimeStamps(result)
     fixDuration(result)
-    addMeasureNum(result)
     fixTempoTime(result)
     convertTempo(result)
+    addMeasureNum(result)
 
     outputFile = "output2.json"
 
