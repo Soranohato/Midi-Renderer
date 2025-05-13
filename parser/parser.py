@@ -7,7 +7,7 @@ from collections import defaultdict
 def fixTimeStamps(result):
     for track in result.keys():
         # skip over the keys that aren't midi tracks
-        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
             continue
 
         # track the tempo while iterating over each note, then convert
@@ -45,7 +45,7 @@ def fixTimeStamps(result):
                 
 def fixDuration(result):
     for track in result.keys():
-        if track in ["TimeSig", "Tempo", "TotalNotes"]:
+        if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
             continue
 
         # sort by note ends
@@ -162,9 +162,61 @@ def convertTempo(result):
             for tempo in result[track]:
                 # tempo starts as microseconds per beat -> reciprocal -> beats per sec -> BPM
                 tempoVal = result[track][currTempoIndex]["tempo"]
-                tempoVal = 1 / tempoVal * 1000000 * 60
+                tempoVal = round(1 / tempoVal * 1000000 * 60, 0)
                 result[track][currTempoIndex]["tempo"] = tempoVal
                 currTempoIndex += 1
+
+def addMeasureNum(result):
+    currTimeSigIndex = 0
+    currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
+    currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
+    measureStarts = [0.0]
+    beatsSinceBarLine = 0
+    currTime = 0
+    currTempo = result["Tempo"][0]["tempo"]
+
+    for tempoChange in result["Tempo"]:
+        deltaTime = tempoChange["start"] - currTime
+        deltaBeats = deltaTime / (60 / currTempo) # trust that the tempo matches the denominator
+
+        # If bar line has not been crossed
+        if (beatsSinceBarLine + deltaBeats < currNumerator):
+            beatsSinceBarLine += deltaBeats
+            currTime += deltaTime
+        # bar line has been crossed
+        else:
+            while (True):
+                beatsLeft = currNumerator - beatsSinceBarLine
+                secondsLeft = beatsLeft * (60 / currTempo) # calculate remaining time in measure
+
+                # if there are no bar lines left break
+                if (deltaBeats < beatsLeft):
+                    break
+
+                deltaBeats -= beatsLeft
+                beatsSinceBarLine = 0
+                currTime += secondsLeft
+                measureStarts.append(currTime)
+
+                #check if time sig has been adjusted and adjust accordingly
+                if (currTimeSigIndex + 1 < len(result["TimeSig"]) and currTime + 0.01 >= result["TimeSig"][currTimeSigIndex + 1]["start"]):
+                    print(currNumerator)
+                    print(len(measureStarts))
+                    currTimeSigIndex += 1
+                    currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
+                    currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
+
+        currTempo = tempoChange["tempo"]
+
+    # finish last bar
+    beatsLeft = currNumerator - beatsSinceBarLine
+    secondsLeft = beatsLeft * (60 / currTempo) # calculate remaining time in measure
+    measureStarts.append(currTime + secondsLeft)
+
+    # insert measure starts in JSON
+    result["MeasureStart"] = measureStarts
+
+
 
 def parseMidi(filename):
     output = defaultdict(list)
@@ -172,6 +224,8 @@ def parseMidi(filename):
     activeNotes = {}
     totalTime = 0
     totalNotes = 0
+    noteLow = 127
+    noteHigh = 0
 
     with open(filename, "r") as f:
         lines = f.readlines()
@@ -203,6 +257,13 @@ def parseMidi(filename):
             noteMatch = re.search(r'note=(\d+)', line)
             if noteMatch and currInstrument:
                 noteVal = int(noteMatch.group(1))
+
+                # adjust midi note range
+                if (noteVal < noteLow and noteVal > 21):
+                    noteLow = noteVal
+                if (noteVal > noteHigh):
+                    noteHigh = noteVal
+
                 activeNotes.setdefault(noteVal, []).append(totalTime)
 
         # Finds the corresponding note_on and removes it to the list of active
@@ -254,6 +315,11 @@ def parseMidi(filename):
     output["TotalNotes"].append({
         "TotalNotes": totalNotes
     })
+    output["NoteRange"].append({
+        "high": noteHigh,
+        "low": noteLow
+    })
+    output["MeasureStart"].append([])
 
     return dict(output)
 
@@ -277,8 +343,9 @@ def main():
     fixDuration(result)
     fixTempoTime(result)
     convertTempo(result)
+    addMeasureNum(result)
 
-    outputFile = "montunomidi.json"
+    outputFile = "output2.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
