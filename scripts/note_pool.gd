@@ -1,6 +1,6 @@
 extends Control
 
-const NOTES_TO_START = 50
+const NOTES_TO_START = 250
 const VIEW_WIDTH = 1890
 const VIEW_HEIGHT = 865
 const NoteScene = preload("res://Note.tscn")
@@ -12,6 +12,8 @@ them without fully deleting them to allow the reuse of the allocated memory.
 """
 
 @onready var objs = []
+@onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
+
 
 func _ready() -> void:
 	# instantiate all of those starting notes before the song really starts
@@ -20,6 +22,8 @@ func _ready() -> void:
 		add_child(scene)
 		objs.append(scene)
 		scene.index = x
+	
+	conductor.begin_song()
 
 func allocate_note() -> Node:
 	# Iterate through the pool and attempt to locate an unused note
