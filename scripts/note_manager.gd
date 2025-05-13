@@ -18,7 +18,7 @@ var loadedmidi
 var noterange
 
 func _ready()->void:
-	loadedmidi = load_json("res://parser/output2.json")
+	loadedmidi = load_json("res://parser/output3.json")
 	
 	for track in loadedmidi.keys():
 		if track in METADATA_TRACKS:

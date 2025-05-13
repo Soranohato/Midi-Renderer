@@ -345,7 +345,7 @@ def main():
     convertTempo(result)
     addMeasureNum(result)
 
-    outputFile = "output2.json"
+    outputFile = "output3.json"
 
     with open(outputFile, 'w') as f:
         json.dump(result, f, indent=4)
