@@ -1,0 +1,6 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://bl8dyxhb3t5em"]
+
+[ext_resource type="FontFile" uid="uid://cvreyacb6mdf0" path="res://caviar_dreams/CaviarDreams.ttf" id="1_mk47q"]
+
+[resource]
+default_font = ExtResource("1_mk47q")

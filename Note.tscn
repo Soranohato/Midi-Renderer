@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://hvlo5co0rbis"]
+
+[ext_resource type="Script" uid="uid://dldai7w7su0uc" path="res://scripts/note.gd" id="1_m01oh"]
+
+[node name="Note" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_m01oh")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = -4.0
+offset_right = 123.0
+offset_bottom = 4.0
+color = Color(0.4316, 0.83, 0.48472, 1)
