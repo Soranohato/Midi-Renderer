@@ -15,8 +15,11 @@ const DEFAULT_COLOR = Color("6ed47c")
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
 
+@onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
+
 var loadedmidi
 var noterange
+var totalNotes
 
 func _ready()->void:
 	loadedmidi = load_json("res://parser/output3.json")
@@ -37,6 +40,8 @@ func _ready()->void:
 	
 	
 	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
+	totalNotes = loadedmidi["TotalNotes"][0]["TotalNotes"]
+	conductor.set_total_notes(totalNotes)
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)

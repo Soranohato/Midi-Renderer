@@ -56,8 +56,9 @@ func _on_timestamp_update(timestamp : float) -> void:
 		circle.emitting = true
 		circle.restart()
 		
+		conductor.note_played()
+		
 		fired = true
-
 
 func custom_interpolate(a,b,t,f)->float:
 	return lerp(float(a), float(b), pow(t, f))

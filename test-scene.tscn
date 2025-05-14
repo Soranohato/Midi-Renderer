@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bfq8b16shrhx7"]
+[gd_scene load_steps=8 format=3 uid="uid://bfq8b16shrhx7"]
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
+[ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
 
 [node name="Window" type="Control"]
 layout_mode = 3
@@ -79,5 +80,21 @@ horizontal_alignment = 2
 vertical_alignment = 1
 script = ExtResource("6_d881s")
 
+[node name="NoteCounter" type="RichTextLabel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -500.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = 45.0
+grow_horizontal = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 24
+text = " x / y Notes Played"
+horizontal_alignment = 2
+script = ExtResource("7_d881s")
+
+[connection signal="update_note_count" from="Conductor" to="HUD/NoteCounter" method="_on_conductor_update_note_count"]
 [connection signal="update_song_timestamp" from="Conductor" to="NoteManager" method="_on_conductor_update_song_timestamp"]
 [connection signal="update_song_timestamp" from="Conductor" to="HUD/Timer" method="_on_conductor_update_song_timestamp"]
