@@ -17,9 +17,12 @@ const DEFAULT_COLOR = Color("6ed47c")
 
 @onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
 
+signal send_measure_number(currMeasure, totalMeasures) # for the measure counter info
+
 var loadedmidi
 var noterange
 var totalNotes
+var totalMeasures
 
 func _ready()->void:
 	loadedmidi = load_json("res://parser/output3.json")
@@ -42,6 +45,7 @@ func _ready()->void:
 	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
 	totalNotes = loadedmidi["TotalNotes"][0]["TotalNotes"]
 	conductor.set_total_notes(totalNotes)
+	totalMeasures = loadedmidi["MeasureStart"].size()
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -84,6 +88,9 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		# the current timestamp exceeds the current measure's end. Generate new notes and increment
 		# the current measure!
 		currentmeasure += 1
+		
+		# emit signal to measure counter
+		send_measure_number.emit(currentmeasure, totalMeasures)
 		
 		# generate all notes that are in this measure
 		for track_index in range(TRACK_NAMES.size()):
