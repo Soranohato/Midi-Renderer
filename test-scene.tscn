@@ -2,7 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
-[ext_resource type="AudioStream" uid="uid://b2nymsad7rsw" path="res://parser/final plz.wav" id="3_02nmi"]
+[ext_resource type="AudioStream" uid="uid://b53g1xe7usf1c" path="res://parser/Morphogenetic Sorrow 2.wav" id="3_02nmi"]
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]

@@ -109,6 +109,11 @@ func generate_notes(measurestart, measureend, track_index):
 		if notepitch < loadedmidi["NoteRange"][0]['low']: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
 			currentnote += 1
 			continue
+			
+		# skip notes that have a start time less than 0 seconds
+		if notestart < 0:
+			currentnote += 1
+			continue
 		
 		var newnote = note_pool.allocate_note()
 		
