@@ -4,9 +4,6 @@ extends Node
 
 signal update_song_timestamp(current_timestamp)
 
-func _ready() -> void:
-	begin_song()
-
 func begin_song()->void:
 	
 	# begin playback of the song
