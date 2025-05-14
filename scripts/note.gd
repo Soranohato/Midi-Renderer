@@ -46,17 +46,18 @@ func _on_timestamp_update(timestamp : float) -> void:
 		note_rect.position.x = 0
 		note_rect.size = Vector2(lerped_size, note_rect.size.y)
 	
-	# particles emit once
-	if timestamp < starttime:
-		fired = false
-	elif not fired:
-		particle.emitting = true
-		particle.restart()
-		
-		circle.emitting = true
-		circle.restart()
-		
-		fired = true
+	# particles emit once, also don't emit particles for short notes
+	if target_width > 35:
+		if timestamp < starttime:
+			fired = false
+		elif not fired:
+			particle.emitting = true
+			particle.restart()
+			
+			circle.emitting = true
+			circle.restart()
+			
+			fired = true
 
 
 func custom_interpolate(a,b,t,f)->float:
