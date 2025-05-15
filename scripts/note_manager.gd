@@ -145,6 +145,7 @@ func generate_notes(measurestart, measureend, track_index):
 		newnote.target_width = note_visual_len - 5
 		newnote.note_rect.size.x = 0
 		newnote.note_rect.visible = true
+		newnote.z_index = track_index
 		
 		# set up the animation params of the new note
 		newnote.starttime = notestart
