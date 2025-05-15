@@ -11,16 +11,19 @@ const DEFAULT_COLOR = Color("6ed47c")
 @export var note_pool : Node
 @export var track_colors : Array[Color]
 @export var tracks_to_use : Array[String]
+@export var transposes : Array[int]
 
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
 
 var loadedmidi
 var noterange
+var pitchoffset # in order to make room for the upwards transpositions, we will be artificially pushing all the other notes down.
 
 func _ready()->void:
 	loadedmidi = load_json("res://parser/output3.json")
 	
+	# if user has not specified tracks to use, do all of them
 	if tracks_to_use.is_empty():
 		for track in loadedmidi.keys():
 			if track in METADATA_TRACKS:
@@ -30,13 +33,30 @@ func _ready()->void:
 	else:
 		TRACK_NAMES = tracks_to_use
 		
+	# if transpose array is wrong length, fix it
+	while transposes.size() < TRACK_NAMES.size():
+		transposes.append(0)
+	
+	# retrieve noterange from midi file
+	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
+	
+	# adjust noterange based on transposes
+	var mintranspose = transposes[0] # minimum value in transpose array
+	var maxtranspose = transposes[0] # maximum value in transpose array
+	for x in transposes:
+		if x < mintranspose:
+			mintranspose = x
+		if x > maxtranspose:
+			maxtranspose = x
+	
+	noterange += abs(mintranspose) + abs(maxtranspose)
+	pitchoffset = maxtranspose
+	
+		
 	
 	# initialize the note index of each track
 	for x in TRACK_NAMES:
 		currentnotes.append(0)
-	
-	
-	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -106,15 +126,18 @@ func generate_notes(measurestart, measureend, track_index):
 		var notepitch = loadedmidi[track_name][currentnote]["midiValue"]
 		
 		# skip notes that are "control" notes
-		if notepitch < loadedmidi["NoteRange"][0]['low']: # TEMPORARY FIX - USE THE ACTUAL PITCH RANGE WHEN POSSIBLE
+		if notepitch < loadedmidi["NoteRange"][0]['low']:
 			currentnote += 1
 			continue
 		
 		var newnote = note_pool.allocate_note()
 		
+		# adjust pitch based on transpositions
+		var adjusted_notepitch = (notepitch + transposes[track_index]) - pitchoffset
+		
 		# calculate the values in visual space (relative to the note pool view)
 		var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
-		var note_y =  ((111 - notepitch) / noterange) * note_pool.VIEW_HEIGHT
+		var note_y =  ((loadedmidi["NoteRange"][0]['high'] - adjusted_notepitch) / noterange) * note_pool.VIEW_HEIGHT
 		var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
 		
 		# position the note in viewport space
