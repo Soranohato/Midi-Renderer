@@ -142,7 +142,7 @@ func generate_notes(measurestart, measureend, track_index):
 		
 		# position the note in viewport space
 		newnote.position = Vector2(note_x, note_y)
-		newnote.target_width = note_visual_len
+		newnote.target_width = note_visual_len - 5
 		newnote.note_rect.size.x = 0
 		newnote.note_rect.visible = true
 		

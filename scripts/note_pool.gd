@@ -42,7 +42,7 @@ func allocate_note() -> Node:
 		add_child(scene)
 		objs.append(scene)
 		objs[i].is_alloc = true
-		print(objs.size())
+		print("total alloc %d" % objs.size())
 		return scene
 		
 	else:
