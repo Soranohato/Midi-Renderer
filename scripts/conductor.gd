@@ -8,9 +8,6 @@ signal update_note_count(note_count, total_notes)
 var notes_counter : int = 0
 var total_notes : int = 0
 
-func _ready() -> void:
-	begin_song()
-
 func begin_song()->void:
 	
 	# begin playback of the song

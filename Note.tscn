@@ -65,7 +65,7 @@ color = Color(0.4316, 0.83, 0.48472, 1)
 
 [node name="particle" type="GPUParticles2D" parent="."]
 emitting = false
-amount = 4
+amount = 2
 texture = ExtResource("2_pmjlu")
 one_shot = true
 explosiveness = 1.0
