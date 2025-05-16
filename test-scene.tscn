@@ -1,11 +1,13 @@
-[gd_scene load_steps=7 format=3 uid="uid://bfq8b16shrhx7"]
+[gd_scene load_steps=9 format=3 uid="uid://bfq8b16shrhx7"]
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
-[ext_resource type="AudioStream" uid="uid://b2nymsad7rsw" path="res://parser/final plz.wav" id="3_02nmi"]
+[ext_resource type="AudioStream" uid="uid://b53g1xe7usf1c" path="res://parser/Morphogenetic Sorrow 2.wav" id="3_02nmi"]
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
+[ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
+[ext_resource type="Script" uid="uid://cn06bcysjohfx" path="res://scripts/measure_counter.gd" id="8_yewqo"]
 
 [node name="Window" type="Control"]
 layout_mode = 3
@@ -79,5 +81,37 @@ horizontal_alignment = 2
 vertical_alignment = 1
 script = ExtResource("6_d881s")
 
+[node name="NoteCounter" type="RichTextLabel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -500.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = 45.0
+grow_horizontal = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 24
+text = " x / y Notes Played"
+horizontal_alignment = 2
+script = ExtResource("7_d881s")
+
+[node name="MeasureCounter" type="RichTextLabel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -375.0
+offset_top = 51.0
+offset_right = -15.0
+offset_bottom = 91.0
+grow_horizontal = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 24
+text = "x / y Measures Played"
+horizontal_alignment = 2
+script = ExtResource("8_yewqo")
+
+[connection signal="update_note_count" from="Conductor" to="HUD/NoteCounter" method="_on_conductor_update_note_count"]
 [connection signal="update_song_timestamp" from="Conductor" to="NoteManager" method="_on_conductor_update_song_timestamp"]
 [connection signal="update_song_timestamp" from="Conductor" to="HUD/Timer" method="_on_conductor_update_song_timestamp"]
+[connection signal="send_measure_number" from="NoteManager" to="HUD/MeasureCounter" method="_on_note_manager_send_measure_number"]

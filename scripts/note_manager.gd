@@ -16,8 +16,15 @@ const DEFAULT_COLOR = Color("6ed47c")
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
 
+@onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
+
+signal send_measure_number(currMeasure, totalMeasures) # for the measure counter info
+
 var loadedmidi
 var noterange
+var totalNotes
+var totalMeasures
+
 var pitchoffset # in order to make room for the upwards transpositions, we will be artificially pushing all the other notes down.
 
 func _ready()->void:
@@ -57,6 +64,11 @@ func _ready()->void:
 	# initialize the note index of each track
 	for x in TRACK_NAMES:
 		currentnotes.append(0)
+	
+	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
+	totalNotes = loadedmidi["TotalNotes"][0]["TotalNotes"]
+	conductor.set_total_notes(totalNotes)
+	totalMeasures = loadedmidi["MeasureStart"].size()
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -100,6 +112,9 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		# the current measure!
 		currentmeasure += 1
 		
+		# emit signal to measure counter
+		send_measure_number.emit(currentmeasure, totalMeasures)
+		
 		# generate all notes that are in this measure
 		for track_index in range(TRACK_NAMES.size()):
 			generate_notes(measurestart, measureend, track_index)
@@ -127,6 +142,11 @@ func generate_notes(measurestart, measureend, track_index):
 		
 		# skip notes that are "control" notes
 		if notepitch < loadedmidi["NoteRange"][0]['low']:
+			currentnote += 1
+			continue
+			
+		# skip notes that have a start time less than 0 seconds
+		if notestart < 0:
 			currentnote += 1
 			continue
 		

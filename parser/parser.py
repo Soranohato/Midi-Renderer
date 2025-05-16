@@ -336,7 +336,7 @@ def createTxt(filepath):
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python parser.py <input.mid> <output.json")
+        print("Usage: python parser.py <input.mid> <output.json>")
         sys.exit(1)
 
     midiIn = sys.argv[1]

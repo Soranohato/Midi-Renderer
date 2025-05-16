@@ -3,6 +3,10 @@ extends Node
 @onready var audionode : AudioStreamPlayer = $song
 
 signal update_song_timestamp(current_timestamp)
+signal update_note_count(note_count, total_notes)
+
+var notes_counter : int = 0
+var total_notes : int = 0
 
 func begin_song()->void:
 	
@@ -28,3 +32,11 @@ func _input(event):
 			
 			notemanager.currentmeasure = 50
 			notemanager.currentnote = notemanager.loadedmidi["Flute"].size() - 10 - 1
+			
+func note_played():
+	notes_counter += 1
+	update_note_count.emit(notes_counter, total_notes)
+	
+func set_total_notes(totalNotes):
+	total_notes = totalNotes
+	update_note_count.emit(notes_counter, total_notes)
