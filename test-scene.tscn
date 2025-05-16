@@ -2,8 +2,8 @@
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
-[ext_resource type="AudioStream" uid="uid://b53g1xe7usf1c" path="res://parser/Morphogenetic Sorrow 2.wav" id="3_02nmi"]
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
+[ext_resource type="AudioStream" uid="uid://dc3lerx6ia7bq" path="res://parser/Through Patches v2.wav" id="3_yewqo"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
 [ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
@@ -26,26 +26,30 @@ offset_left = -6917.0
 offset_top = -5918.0
 offset_right = 22436.0
 offset_bottom = 10707.0
-color = Color(0.1922, 0.31, 0.30411, 1)
+color = Color(0.195944, 0.0966367, 0.290358, 1)
 
 [node name="Conductor" type="Node" parent="." groups=["conductor"]]
 script = ExtResource("2_8amj3")
 
 [node name="song" type="AudioStreamPlayer" parent="Conductor"]
-stream = ExtResource("3_02nmi")
+stream = ExtResource("3_yewqo")
 
 [node name="NoteManager" type="Control" parent="." node_paths=PackedStringArray("note_pool")]
 anchors_preset = 0
 script = ExtResource("3_8amj3")
 note_pool = NodePath("../NotePool")
-track_colors = Array[Color]([Color(0.770555, 0.379034, 0.877586, 1), Color(0.2749, 0.658906, 0.75752, 1), Color(0.364129, 0.629851, 0.507168, 1), Color(0.934945, 0.477603, 0.391726, 1), Color(0.975947, 0.521412, 0, 1), Color(0.919297, 0.734894, 0, 1), Color(0.121509, 0.647147, 0.812613, 1)])
+track_colors = Array[Color]([Color(1, 1, 1, 1), Color(0.567402, 0.422218, 0.916442, 1), Color(0.827451, 0.827451, 0.827451, 1), Color(0.420206, 0.187325, 0.635168, 1), Color(0.298567, 0.11766, 0.487853, 1)])
 
 [node name="NotePool" type="Control" parent="."]
-anchors_preset = 0
-offset_left = 15.0
-offset_top = 103.0
-offset_right = 1905.0
-offset_bottom = 968.0
+layout_mode = 1
+anchor_left = 1.25
+anchor_top = 1.24
+anchor_right = 1.25
+anchor_bottom = 1.24
+offset_left = -945.0
+offset_top = -432.68
+offset_right = 945.0
+offset_bottom = 432.32
 script = ExtResource("4_c5pbs")
 
 [node name="HUD" type="CanvasLayer" parent="."]
@@ -57,7 +61,7 @@ offset_right = 880.0
 offset_bottom = 101.0
 theme = ExtResource("1_02nmi")
 theme_override_font_sizes/normal_font_size = 36
-text = "Morphogenetic Sorrow
+text = "Through Patches of Violet
 Soranohato"
 scroll_active = false
 
