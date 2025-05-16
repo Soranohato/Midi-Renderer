@@ -53,8 +53,8 @@ func _on_timestamp_update(timestamp : float) -> void:
 		elif not fired:
 			particle.emitting = true
 			particle.restart()
-      
-      conductor.note_played() # note counter for conductor
+	  
+			conductor.note_played() # note counter for conductor
 			
 			circle.emitting = true
 			circle.restart()
