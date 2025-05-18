@@ -6,7 +6,7 @@ from collections import defaultdict
 
 TICKS_PER_BEAT = 480
 
-def fixTimeStamps(result):
+def fixNoteTimeStamps(result):
     for track in result.keys():
         # skip over the keys that aren't midi tracks
         if track in ["TimeSig", "Tempo", "TotalNotes", "NoteRange", "MeasureStart"]:
@@ -92,68 +92,62 @@ def fixDuration(result):
         # convert back to sorted by start
         result[track] = sorted(result[track], key=lambda note: note["start"])
 
+def fixTimeSig(result):
+    tempotrack = result["Tempo"]
+    timesigtrack = result["TimeSig"]
+
+    currTempoIndex = 0
+    currentTempo = tempotrack[0]["tempo"]
+    ticksElapsed = 0.0
+    timeElapsed = 0.0
+
+    # iterate over each time signature event in the entire track
+    for timesigIndex in range(len(timesigtrack)):
+        timesig = timesigtrack[timesigIndex]
+        deltaTime = 0
+
+        # For each tempo change event that exists between now and the next time sig change, process the amount of
+        # ticks elapsed and covert each one to seconds.
+        while currTempoIndex + 1 < len(tempotrack) and tempotrack[currTempoIndex + 1]["start"] <= timesig["start"]:
+            # calculate how many ticks have passed since the previous tempo/timesig event
+            deltaTicks = tempotrack[currTempoIndex + 1]["start"] - ticksElapsed
+            deltaTime += tick2second(deltaTicks, TICKS_PER_BEAT, currentTempo)
+
+            # advance the tempo track index
+            currTempoIndex += 1
+            currentTempo = tempotrack[currTempoIndex]["tempo"]
+            ticksElapsed = tempotrack[currTempoIndex]["start"]
+
+        # now that we've processed all the tempo changes, calculate the amount of time it takes to get from the most
+        # recent tempo change event to the timesig event.
+        deltaTicks = timesig["start"] - ticksElapsed
+        deltaTime += tick2second(deltaTicks, TICKS_PER_BEAT, currentTempo)
+
+        # update total time elapsed with our deltaTime
+        timeElapsed += deltaTime
+
+        # write the value to the json
+        timesigtrack[timesigIndex]["start"] = timeElapsed
+
+
 def fixTempoTime(result):
-    for track in result.keys():
-        if track in ["TimeSig"]:
-            tempotrack = result["Tempo"]
-            currentTempo = tempotrack[0]["tempo"]
-            currentTempoIndex = 0
-            currentSigIndex = 0
-            ticksElapsed = 0
-            timeElapsed = 0
+    tempotrack = result["Tempo"]
 
-            for tempo in result[track]:
-                deltaTime = 0
+    prevStartTimeTicks = tempotrack[0]["start"]
+    prevTempo = tempotrack[0]["tempo"]
+    timeElapsed = 0
 
-                # advance to next tempo change event
-                while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
-                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
+    for currTempoIndex in range(len(tempotrack)):
+        # calculated how many ticks, and by extension, seconds, have passed since the last tempo update
+        ticksElapsed = tempotrack[currTempoIndex]["start"] - prevStartTimeTicks
+        deltaTime = tick2second(ticksElapsed, TICKS_PER_BEAT, prevTempo)
+        timeElapsed += deltaTime
 
-                    ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
+        # the current becomes the previous for the next iteration
+        prevStartTimeTicks = tempotrack[currTempoIndex]["start"]
 
-                    # advance past the tempo change
-                    currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
-                    currentTempoIndex += 1
-
-                deltaTime += tick2second(tempo["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
-                ticksElapsed = tempo["start"]
-
-                timeElapsed += deltaTime
-
-                # update "start" to seconds from ticks
-                result[track][currentSigIndex]["start"] = timeElapsed
-                currentSigIndex += 1
-
-        elif track in ["Tempo"]:
-            tempotrack = result["Tempo"]
-            currentTempo = tempotrack[0]["tempo"]
-            currentTempoIndex = 0
-            ticksElapsed = 0
-            timeElapsed = 0
-
-            for tempo in result[track]:
-                deltaTime = 0
-
-                # advance to next tempo change event
-                while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= tempo["start"]:
-                    deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
-
-                    ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
-
-                    # advance past the tempo change
-                    currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
-                    currentTempoIndex += 1
-
-                deltaTime += tick2second(tempo["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
-                ticksElapsed = tempo["start"]
-
-                timeElapsed += deltaTime
-
-                # update "start" to seconds from ticks
-                result[track][currentTempoIndex]["start"] = timeElapsed
-
-        else:
-            continue
+        # update the tempo start time in the json to be in seconds (not ticks)
+        tempotrack[currTempoIndex]["start"] = timeElapsed
 
 # Updates Tempo to BPM
 def convertTempo(result):
@@ -177,6 +171,8 @@ def addMeasureNum(result):
     currTime = 0
     currTempo = result["Tempo"][0]["tempo"]
 
+    measureCount = 0
+
     for tempoChange in result["Tempo"]:
         deltaTime = tempoChange["start"] - currTime
         deltaBeats = deltaTime / (60 / currTempo) # trust that the tempo matches the denominator
@@ -199,6 +195,7 @@ def addMeasureNum(result):
                 beatsSinceBarLine = 0
                 currTime += secondsLeft
                 measureStarts.append(currTime)
+                measureCount += 1
 
                 #check if time sig has been adjusted and adjust accordingly
                 if (currTimeSigIndex + 1 < len(result["TimeSig"]) and currTime + 0.01 >= result["TimeSig"][currTimeSigIndex + 1]["start"]):
@@ -212,6 +209,9 @@ def addMeasureNum(result):
     beatsLeft = currNumerator - beatsSinceBarLine
     secondsLeft = beatsLeft * (60 / currTempo) # calculate remaining time in measure
     measureStarts.append(currTime + secondsLeft)
+    measureCount += 1
+
+    print("created " + str(measureCount) + " measure starts...")
 
     # insert measure starts in JSON
     result["MeasureStart"] = measureStarts
@@ -343,9 +343,12 @@ def main():
     outputFile = sys.argv[2]
     createTxt(midiIn)
     result = parseMidi("trackOutput.txt")
-    fixTimeStamps(result)
+
+    fixNoteTimeStamps(result)
     fixDuration(result)
+    fixTimeSig(result)
     fixTempoTime(result)
+
     convertTempo(result)
     addMeasureNum(result)
 
