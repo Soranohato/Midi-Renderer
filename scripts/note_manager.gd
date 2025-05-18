@@ -20,6 +20,7 @@ const DEFAULT_COLOR = Color("6ed47c")
 
 signal send_measure_number(currMeasure, totalMeasures) # for the measure counter info
 signal send_time_signature(numerator, denominator) # for time sig display
+signal send_tempo(currTempo) # for tempo display
 
 var loadedmidi
 var noterange
@@ -28,6 +29,8 @@ var totalMeasures
 var currTimeSig = 0
 var numerator : int
 var denominator : int
+var currTempoInd = 0
+var currTempo : int
 
 var pitchoffset # in order to make room for the upwards transpositions, we will be artificially pushing all the other notes down.
 
@@ -75,7 +78,7 @@ func _ready()->void:
 	totalMeasures = loadedmidi["MeasureStart"].size()
 	numerator = loadedmidi["TimeSig"][0]["numerator"]
 	denominator = loadedmidi["TimeSig"][0]["denominator"]
-	#send_time_signature.emit(numerator, denominator)
+	currTempo = loadedmidi["Tempo"][0]["tempo"]
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -134,7 +137,14 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 			currTimeSig += 1
 			numerator = loadedmidi["TimeSig"][currTimeSig]["numerator"]
 			denominator = loadedmidi["TimeSig"][currTimeSig]["denominator"]
-		
+			
+	# check if tempo has changed
+	if current_timestamp > loadedmidi["Tempo"][currTempoInd]["start"]:
+		send_tempo.emit(currTempo)
+		#get next tempo
+		if currTempoInd + 1 < loadedmidi["Tempo"].size():
+			currTempoInd += 1
+			currTempo = loadedmidi["Tempo"][currTempoInd]["tempo"]
 		
 
 # Generate all the notes for a measure given the track name and the start and end times of the measure

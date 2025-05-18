@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bfq8b16shrhx7"]
+[gd_scene load_steps=11 format=3 uid="uid://bfq8b16shrhx7"]
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
 [ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
 [ext_resource type="Script" uid="uid://cn06bcysjohfx" path="res://scripts/measure_counter.gd" id="8_yewqo"]
+[ext_resource type="Script" uid="uid://dnr8ulbfsuw0a" path="res://scripts/tempoDisplay.gd" id="9_27knc"]
 [ext_resource type="Script" uid="uid://b8qxfur3d3pqh" path="res://scripts/TimeSigDisplay.gd" id="9_mdlve"]
 
 [node name="Window" type="Control"]
@@ -135,6 +136,7 @@ theme = ExtResource("1_02nmi")
 theme_override_font_sizes/normal_font_size = 36
 text = "x BPM"
 horizontal_alignment = 2
+script = ExtResource("9_27knc")
 
 [node name="TimeSignature" type="RichTextLabel" parent="HUD"]
 anchors_preset = 1
@@ -155,4 +157,5 @@ script = ExtResource("9_mdlve")
 [connection signal="update_song_timestamp" from="Conductor" to="NoteManager" method="_on_conductor_update_song_timestamp"]
 [connection signal="update_song_timestamp" from="Conductor" to="HUD/Timer" method="_on_conductor_update_song_timestamp"]
 [connection signal="send_measure_number" from="NoteManager" to="HUD/MeasureCounter" method="_on_note_manager_send_measure_number"]
+[connection signal="send_tempo" from="NoteManager" to="HUD/Tempo" method="_on_note_manager_send_tempo"]
 [connection signal="send_time_signature" from="NoteManager" to="HUD/TimeSignature" method="_on_note_manager_send_time_signature"]
