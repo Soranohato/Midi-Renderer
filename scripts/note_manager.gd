@@ -28,7 +28,7 @@ var totalMeasures
 var pitchoffset # in order to make room for the upwards transpositions, we will be artificially pushing all the other notes down.
 
 func _ready()->void:
-	loadedmidi = load_json("res://parser/output3.json")
+	loadedmidi = load_json("res://parser/patches.json")
 	
 	# if user has not specified tracks to use, do all of them
 	if tracks_to_use.is_empty():
