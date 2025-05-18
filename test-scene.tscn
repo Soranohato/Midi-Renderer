@@ -1,13 +1,14 @@
-[gd_scene load_steps=9 format=3 uid="uid://bfq8b16shrhx7"]
+[gd_scene load_steps=10 format=3 uid="uid://bfq8b16shrhx7"]
 
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
-[ext_resource type="AudioStream" uid="uid://dc3lerx6ia7bq" path="res://parser/Through Patches v2.wav" id="3_yewqo"]
+[ext_resource type="AudioStream" uid="uid://ihuguw4wkxrh" path="res://parser/Through Patches v2.wav" id="3_yewqo"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
 [ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
 [ext_resource type="Script" uid="uid://cn06bcysjohfx" path="res://scripts/measure_counter.gd" id="8_yewqo"]
+[ext_resource type="Script" uid="uid://b8qxfur3d3pqh" path="res://scripts/TimeSigDisplay.gd" id="9_mdlve"]
 
 [node name="Window" type="Control"]
 layout_mode = 3
@@ -86,14 +87,17 @@ vertical_alignment = 1
 script = ExtResource("6_d881s")
 
 [node name="NoteCounter" type="RichTextLabel" parent="HUD"]
-anchors_preset = 1
+anchors_preset = 3
 anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
-offset_left = -500.0
-offset_top = 15.0
-offset_right = -15.0
-offset_bottom = 45.0
+anchor_bottom = 1.0
+offset_left = -745.0
+offset_top = -90.0
+offset_right = -260.0
+offset_bottom = -60.0
 grow_horizontal = 0
+grow_vertical = 0
 theme = ExtResource("1_02nmi")
 theme_override_font_sizes/normal_font_size = 24
 text = " x / y Notes Played"
@@ -101,21 +105,54 @@ horizontal_alignment = 2
 script = ExtResource("7_d881s")
 
 [node name="MeasureCounter" type="RichTextLabel" parent="HUD"]
-anchors_preset = 1
+anchors_preset = 3
 anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
-offset_left = -375.0
-offset_top = 51.0
-offset_right = -15.0
-offset_bottom = 91.0
+anchor_bottom = 1.0
+offset_left = -620.0
+offset_top = -55.0
+offset_right = -260.0
+offset_bottom = -15.0
 grow_horizontal = 0
+grow_vertical = 0
 theme = ExtResource("1_02nmi")
 theme_override_font_sizes/normal_font_size = 24
 text = "x / y Measures Played"
 horizontal_alignment = 2
 script = ExtResource("8_yewqo")
 
+[node name="Tempo" type="RichTextLabel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -175.0
+offset_top = 59.0
+offset_right = -15.0
+offset_bottom = 103.0
+grow_horizontal = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 36
+text = "x BPM"
+horizontal_alignment = 2
+
+[node name="TimeSignature" type="RichTextLabel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -162.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = 68.0
+grow_horizontal = 0
+theme = ExtResource("1_02nmi")
+theme_override_font_sizes/normal_font_size = 36
+text = "x/y"
+horizontal_alignment = 2
+script = ExtResource("9_mdlve")
+
 [connection signal="update_note_count" from="Conductor" to="HUD/NoteCounter" method="_on_conductor_update_note_count"]
 [connection signal="update_song_timestamp" from="Conductor" to="NoteManager" method="_on_conductor_update_song_timestamp"]
 [connection signal="update_song_timestamp" from="Conductor" to="HUD/Timer" method="_on_conductor_update_song_timestamp"]
 [connection signal="send_measure_number" from="NoteManager" to="HUD/MeasureCounter" method="_on_note_manager_send_measure_number"]
+[connection signal="send_time_signature" from="NoteManager" to="HUD/TimeSignature" method="_on_note_manager_send_time_signature"]
