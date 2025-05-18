@@ -145,6 +145,7 @@ def fixTempoTime(result):
 
         # the current becomes the previous for the next iteration
         prevStartTimeTicks = tempotrack[currTempoIndex]["start"]
+        prevTempo = tempotrack[currTempoIndex]["tempo"]
 
         # update the tempo start time in the json to be in seconds (not ticks)
         tempotrack[currTempoIndex]["start"] = timeElapsed
@@ -166,6 +167,7 @@ def addMeasureNum(result):
     currTimeSigIndex = 0
     currNumerator = result["TimeSig"][currTimeSigIndex]["numerator"]
     currDenom = result["TimeSig"][currTimeSigIndex]["denominator"]
+
     measureStarts = [0.0]
     beatsSinceBarLine = 0
     currTime = 0
