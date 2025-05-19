@@ -239,6 +239,7 @@ def parseMidi(filename):
         if line.startswith('MidiTrack(['):
             totalTime = 0
             currInstrument = None
+            fullName = None
             activeNotes = {}
 
         # tracks total elapsed time
@@ -258,6 +259,13 @@ def parseMidi(filename):
             if nameMatch:
                 currInstrument = nameMatch.group(1)
 
+        # detects channel for notes
+        if "channel=" in line and currInstrument:
+            channelMatch = re.search(r'channel=(\d+)', line)
+            if channelMatch:
+                channel = channelMatch.group(1)
+                fullName = f"{currInstrument}, {channel}"
+
         # Detects start of a new note and adds it to a list until
         # its corresponding note_off is found
         if "note_on" in line and "velocity=0" not in line:
@@ -265,6 +273,9 @@ def parseMidi(filename):
             noteMatch = re.search(r'note=(\d+)', line)
             if noteMatch and currInstrument:
                 noteVal = int(noteMatch.group(1))
+
+                if noteVal < 21:
+                    continue
 
                 # adjust midi note range
                 if (noteVal < noteLow and noteVal > 21):
@@ -284,11 +295,8 @@ def parseMidi(filename):
                     startTime = activeNotes[noteVal].pop(0)
                     duration = totalTime - startTime
                     endTime = startTime + duration
-                    # convert into seconds
-                    # ()
 
-
-                    output[currInstrument].append({
+                    output[fullName].append({
                         "start": startTime,
                         "end": endTime,
                         "duration": duration,
