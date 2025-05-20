@@ -3,7 +3,7 @@
 [ext_resource type="Theme" uid="uid://bl8dyxhb3t5em" path="res://AaRANR.tres" id="1_02nmi"]
 [ext_resource type="Script" uid="uid://bwg7ew02ew4gx" path="res://scripts/conductor.gd" id="2_8amj3"]
 [ext_resource type="Script" uid="uid://dgln8f2wyry0b" path="res://scripts/note_manager.gd" id="3_8amj3"]
-[ext_resource type="AudioStream" uid="uid://ihuguw4wkxrh" path="res://parser/Through Patches v2.wav" id="3_yewqo"]
+[ext_resource type="AudioStream" uid="uid://dw63rklij3u4n" path="res://parser/Compass.wav" id="3_27knc"]
 [ext_resource type="Script" uid="uid://toao8lhqpj1f" path="res://scripts/note_pool.gd" id="4_c5pbs"]
 [ext_resource type="Script" uid="uid://bfu6geyc4ix0r" path="res://scripts/timer.gd" id="6_d881s"]
 [ext_resource type="Script" uid="uid://bpn8njw0y4djo" path="res://scripts/note_counter.gd" id="7_d881s"]
@@ -34,7 +34,7 @@ color = Color(0.195944, 0.0966367, 0.290358, 1)
 script = ExtResource("2_8amj3")
 
 [node name="song" type="AudioStreamPlayer" parent="Conductor"]
-stream = ExtResource("3_yewqo")
+stream = ExtResource("3_27knc")
 
 [node name="NoteManager" type="Control" parent="." node_paths=PackedStringArray("note_pool")]
 anchors_preset = 0
