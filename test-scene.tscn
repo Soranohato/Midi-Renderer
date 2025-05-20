@@ -28,7 +28,7 @@ offset_left = -6917.0
 offset_top = -5918.0
 offset_right = 22436.0
 offset_bottom = 10707.0
-color = Color(0.195944, 0.0966367, 0.290358, 1)
+color = Color(0.027451, 0.2, 0.54902, 1)
 
 [node name="Conductor" type="Node" parent="." groups=["conductor"]]
 script = ExtResource("2_8amj3")
@@ -40,7 +40,7 @@ stream = ExtResource("3_27knc")
 anchors_preset = 0
 script = ExtResource("3_8amj3")
 note_pool = NodePath("../NotePool")
-track_colors = Array[Color]([Color(1, 1, 1, 1), Color(0.567402, 0.422218, 0.916442, 1), Color(0.827451, 0.827451, 0.827451, 1), Color(0.420206, 0.187325, 0.635168, 1), Color(0.298567, 0.11766, 0.487853, 1)])
+track_colors = Array[Color]([Color(0.839216, 0.486275, 0.2, 1), Color(0.937255, 0.831373, 0.337255, 1), Color(0.105882, 0.317647, 0.870588, 1), Color(0.0196078, 0.0784314, 0.270588, 1)])
 
 [node name="NotePool" type="Control" parent="."]
 layout_mode = 1
@@ -94,9 +94,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -745.0
-offset_top = -90.0
+offset_top = -86.0
 offset_right = -260.0
-offset_bottom = -60.0
+offset_bottom = -56.0
 grow_horizontal = 0
 grow_vertical = 0
 theme = ExtResource("1_02nmi")
@@ -112,9 +112,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -620.0
-offset_top = -55.0
+offset_top = -52.0
 offset_right = -260.0
-offset_bottom = -15.0
+offset_bottom = -12.0
 grow_horizontal = 0
 grow_vertical = 0
 theme = ExtResource("1_02nmi")

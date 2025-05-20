@@ -31,6 +31,7 @@ var numerator : int
 var denominator : int
 var currTempoInd = 0
 var currTempo : int
+var songLen
 
 var pitchoffset # in order to make room for the upwards transpositions, we will be artificially pushing all the other notes down.
 
@@ -79,6 +80,13 @@ func _ready()->void:
 	numerator = loadedmidi["TimeSig"][0]["numerator"]
 	denominator = loadedmidi["TimeSig"][0]["denominator"]
 	currTempo = loadedmidi["Tempo"][0]["tempo"]
+	
+	# extrapolates the total measure count
+	songLen = conductor.get_node("song").stream.get_length()
+	var measures_size = loadedmidi["MeasureStart"].size()
+	var measurestart = loadedmidi["MeasureStart"][measures_size - 2]
+	var measureend = loadedmidi["MeasureStart"][measures_size - 1]
+	totalMeasures += int((songLen - measureend) / (measureend - measurestart))
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
