@@ -15,6 +15,7 @@ const DEFAULT_COLOR = Color("6ed47c")
 
 @onready var currentmeasure = 0 # represents the index of the current measure
 @onready var currentnotes = [] # represents the index of the next note to be generated
+@onready var carryovernotes = [] # array of arrays that represents the carry-over notes from the previous measure
 
 @onready var conductor = get_tree().get_nodes_in_group('conductor')[0]
 
@@ -70,8 +71,10 @@ func _ready()->void:
 		
 	
 	# initialize the note index of each track
+	# initialize the carry-over arrays of each track
 	for x in TRACK_NAMES:
 		currentnotes.append(0)
+		carryovernotes.append([])
 	
 	noterange = loadedmidi["NoteRange"][0]["high"] - loadedmidi["NoteRange"][0]["low"]
 	totalNotes = loadedmidi["TotalNotes"][0]["TotalNotes"]
@@ -87,6 +90,8 @@ func _ready()->void:
 	var measurestart = loadedmidi["MeasureStart"][measures_size - 2]
 	var measureend = loadedmidi["MeasureStart"][measures_size - 1]
 	totalMeasures += int((songLen - measureend) / (measureend - measurestart))
+	
+	conductor.begin_song()
 	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
@@ -153,11 +158,70 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		if currTempoInd + 1 < loadedmidi["Tempo"].size():
 			currTempoInd += 1
 			currTempo = loadedmidi["Tempo"][currTempoInd]["tempo"]
+
+
+func initialize_note(track_index, measurestart, measureend, noteinfo, notecolor, particleeffects) -> bool:
+	var track_name = TRACK_NAMES[track_index]
+	var notestart = noteinfo["start"]
+	var notelen = noteinfo["duration"]
+	var noteend = noteinfo["end"]
+	var notepitch = noteinfo["midiValue"]
+	
+	var measurelen = measureend - measurestart
+	
+	# skip notes that are "control" notes
+	if notepitch < loadedmidi["NoteRange"][0]['low']:
+		return false
 		
+	# skip notes that have a start time less than 0 seconds
+	if notestart < 0:
+		return false
+		
+	# if the note extends past the measure
+	if noteend > measureend:
+		# create a "fake" note that starts at the next measure and extends to the same note end
+		var myfakenote = {}
+		myfakenote["start"] = measureend
+		myfakenote["end"] = noteend
+		myfakenote["duration"] = noteend - measureend
+		myfakenote["midiValue"] = notepitch
+		
+		carryovernotes[track_index].append(myfakenote)
+		
+		noteend = measureend
+		notelen = noteend - notestart
+	
+	var newnote = note_pool.allocate_note()
+	
+	# adjust pitch based on transpositions
+	var adjusted_notepitch = (notepitch + transposes[track_index]) - pitchoffset
+	
+	# calculate the values in visual space (relative to the note pool view)
+	var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
+	var note_y =  ((loadedmidi["NoteRange"][0]['high'] - adjusted_notepitch) / noterange) * note_pool.VIEW_HEIGHT
+	var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
+	
+	# position the note in viewport space
+	newnote.position = Vector2(note_x, note_y)
+	newnote.target_width = note_visual_len - 5
+	newnote.note_rect.size.x = 0
+	newnote.note_rect.visible = true
+	newnote.z_index = track_index
+	
+	# set up the animation params of the new note
+	newnote.starttime = notestart
+	newnote.endtime = noteend
+	newnote.deathtime = measureend
+	newnote.fired = not particleeffects
+	newnote.note_rect.color = notecolor
+	
+	# set up the newnote as a listener for the conductor
+	newnote.connect_to_conductor()
+	
+	return true
 
 # Generate all the notes for a measure given the track name and the start and end times of the measure
 func generate_notes(measurestart, measureend, track_index):
-	var notescreated = 0
 	var measurelen = measureend - measurestart
 	
 	var track_name = TRACK_NAMES[track_index]
@@ -167,57 +231,22 @@ func generate_notes(measurestart, measureend, track_index):
 	
 	if track_colors.size() != 0:
 		notecolor = track_colors[track_index % track_colors.size()]
+		
+	# initialize all the carry-over notes from the previous measure
+	var prevcarriedover = carryovernotes[track_index].duplicate(true)
+	carryovernotes[track_index].clear() # clear the array so that notes can be carried over again
 	
-	while currentnote < loadedmidi[track_name].size() and loadedmidi[track_name][currentnote]["start"] < measureend - 0.055: # index OoB error possible on notes array
+	for note in prevcarriedover:
+		initialize_note(track_index, measurestart, measureend, note, notecolor, false)
+	
+	
+	# initialize all the new notes of the new measure
+	while currentnote < loadedmidi[track_name].size() and loadedmidi[track_name][currentnote]["start"] < measureend - 0.055:
 		# print("generated note number " + str(currentnote))
-		var notestart = loadedmidi[track_name][currentnote]["start"]
-		var notelen = loadedmidi[track_name][currentnote]["duration"]
-		var noteend = loadedmidi[track_name][currentnote]["end"]
-		var notepitch = loadedmidi[track_name][currentnote]["midiValue"]
 		
-		# skip notes that are "control" notes
-		if notepitch < loadedmidi["NoteRange"][0]['low']:
-			currentnote += 1
-			continue
-			
-		# skip notes that have a start time less than 0 seconds
-		if notestart < 0:
-			currentnote += 1
-			continue
-		
-		var newnote = note_pool.allocate_note()
-		
-		# adjust pitch based on transpositions
-		var adjusted_notepitch = (notepitch + transposes[track_index]) - pitchoffset
-		
-		# calculate the values in visual space (relative to the note pool view)
-		var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
-		var note_y =  ((loadedmidi["NoteRange"][0]['high'] - adjusted_notepitch) / noterange) * note_pool.VIEW_HEIGHT
-		var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
-		
-		# position the note in viewport space
-		newnote.position = Vector2(note_x, note_y)
-		newnote.target_width = note_visual_len - 5
-		newnote.note_rect.size.x = 0
-		newnote.note_rect.visible = true
-		newnote.z_index = track_index
-		
-		# set up the animation params of the new note
-		newnote.starttime = notestart
-		newnote.endtime = noteend
-		newnote.deathtime = measureend
-		newnote.fired = false
-		newnote.note_rect.color = notecolor
-		
-		# set up the newnote as a listener for the conductor
-		newnote.connect_to_conductor()
-		
-		notescreated += 1
-		
+		var noteinfo = loadedmidi[track_name][currentnote]
+		initialize_note(track_index, measurestart, measureend, noteinfo, notecolor, true)
 		
 		currentnote += 1
 	
 	currentnotes[track_index] = currentnote
-	
-	print("created " + str(notescreated) + " notes!")
-	print("(measure " + str(currentmeasure) + ")")

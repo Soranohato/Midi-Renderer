@@ -1,6 +1,6 @@
 extends Control
 
-const NOTES_TO_START = 3000
+const NOTES_TO_START = 30
 const VIEW_WIDTH = 1890
 const VIEW_HEIGHT = 865
 const NoteScene = preload("res://Note.tscn")
@@ -22,8 +22,6 @@ func _ready() -> void:
 		add_child(scene)
 		objs.append(scene)
 		scene.index = x
-	
-	conductor.begin_song()
 
 func allocate_note() -> Node:
 	# Iterate through the pool and attempt to locate an unused note
