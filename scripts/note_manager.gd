@@ -91,8 +91,6 @@ func _ready()->void:
 	var measureend = loadedmidi["MeasureStart"][measures_size - 1]
 	totalMeasures += int((songLen - measureend) / (measureend - measurestart))
 	
-	conductor.begin_song()
-	
 func load_json(path: String) -> Dictionary:
 	var file = FileAccess.open(path, FileAccess.READ)
 	if not file:
@@ -197,9 +195,9 @@ func initialize_note(track_index, measurestart, measureend, noteinfo, notecolor,
 	var adjusted_notepitch = (notepitch + transposes[track_index]) - pitchoffset
 	
 	# calculate the values in visual space (relative to the note pool view)
-	var note_x = lerp(0, note_pool.VIEW_WIDTH, (notestart - measurestart) / measurelen)
-	var note_y =  ((loadedmidi["NoteRange"][0]['high'] - adjusted_notepitch) / noterange) * note_pool.VIEW_HEIGHT
-	var note_visual_len = (notelen / measurelen) * note_pool.VIEW_WIDTH
+	var note_x = lerp(0.0, note_pool.size.x, (notestart - measurestart) / measurelen)
+	var note_y =  ((loadedmidi["NoteRange"][0]['high'] - adjusted_notepitch) / noterange) * note_pool.size.y
+	var note_visual_len = (notelen / measurelen) * note_pool.size.x
 	
 	# position the note in viewport space
 	newnote.position = Vector2(note_x, note_y)
