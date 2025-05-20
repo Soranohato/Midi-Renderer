@@ -40,7 +40,8 @@ stream = ExtResource("3_27knc")
 anchors_preset = 0
 script = ExtResource("3_8amj3")
 note_pool = NodePath("../NotePool")
-track_colors = Array[Color]([Color(0.839216, 0.486275, 0.2, 1), Color(0.937255, 0.831373, 0.337255, 1), Color(0.105882, 0.317647, 0.870588, 1), Color(0.0196078, 0.0784314, 0.270588, 1)])
+track_colors = Array[Color]([Color(0.0196078, 0.0784314, 0.270588, 1), Color(0.105882, 0.317647, 0.870588, 1), Color(0.937255, 0.831373, 0.337255, 1), Color(0.839216, 0.486275, 0.2, 1)])
+tracks_to_use = Array[String](["Double Bass, 3", "Cello, 2", "Vibraphone, 1", "Flute, 0"])
 
 [node name="NotePool" type="Control" parent="."]
 layout_mode = 1
@@ -63,8 +64,8 @@ offset_right = 880.0
 offset_bottom = 101.0
 theme = ExtResource("1_02nmi")
 theme_override_font_sizes/normal_font_size = 36
-text = "Through Patches of Violet
-Soranohato"
+text = "Compass
+Mili"
 scroll_active = false
 
 [node name="Timer" type="RichTextLabel" parent="HUD"]

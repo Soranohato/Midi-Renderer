@@ -156,6 +156,9 @@ func _on_conductor_update_song_timestamp(current_timestamp: Variant) -> void:
 		if currTempoInd + 1 < loadedmidi["Tempo"].size():
 			currTempoInd += 1
 			currTempo = loadedmidi["Tempo"][currTempoInd]["tempo"]
+			
+	if current_timestamp >= songLen:
+		get_tree().quit()
 
 
 func initialize_note(track_index, measurestart, measureend, noteinfo, notecolor, particleeffects) -> bool:
