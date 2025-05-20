@@ -4,7 +4,7 @@ import re
 import sys
 from collections import defaultdict
 
-TICKS_PER_BEAT = 480
+ticksPerBeat = 480
 
 def fixNoteTimeStamps(result):
     for track in result.keys():
@@ -27,7 +27,7 @@ def fixNoteTimeStamps(result):
 
             # move forward to the next tempo change event
             while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["start"]:
-                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, ticksPerBeat, currentTempo)
 
                 ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -35,7 +35,7 @@ def fixNoteTimeStamps(result):
                 currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                 currentTempoIndex += 1
             
-            deltaTime += tick2second(note["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
+            deltaTime += tick2second(note["start"] - ticksElapsed, ticksPerBeat, currentTempo)
             ticksElapsed = note["start"]
 
             timeElapsed += deltaTime
@@ -68,7 +68,7 @@ def fixDuration(result):
 
             # move forward to the next tempo change event
             while currentTempoIndex + 1 < len(tempotrack) and tempotrack[currentTempoIndex + 1]["start"] <= note["end"]:
-                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
+                deltaTime += tick2second(tempotrack[currentTempoIndex + 1]["start"] - ticksElapsed, ticksPerBeat, currentTempo)
 
                 ticksElapsed = tempotrack[currentTempoIndex + 1]["start"]
 
@@ -76,7 +76,7 @@ def fixDuration(result):
                 currentTempo = tempotrack[currentTempoIndex + 1]["tempo"]
                 currentTempoIndex += 1
             
-            deltaTime += tick2second(note["end"] - ticksElapsed, TICKS_PER_BEAT, currentTempo)
+            deltaTime += tick2second(note["end"] - ticksElapsed, ticksPerBeat, currentTempo)
             ticksElapsed = note["end"]
 
             timeElapsed += deltaTime
@@ -111,7 +111,7 @@ def fixTimeSig(result):
         while currTempoIndex + 1 < len(tempotrack) and tempotrack[currTempoIndex + 1]["start"] <= timesig["start"]:
             # calculate how many ticks have passed since the previous tempo/timesig event
             deltaTicks = tempotrack[currTempoIndex + 1]["start"] - ticksElapsed
-            deltaTime += tick2second(deltaTicks, TICKS_PER_BEAT, currentTempo)
+            deltaTime += tick2second(deltaTicks, ticksPerBeat, currentTempo)
 
             # advance the tempo track index
             currTempoIndex += 1
@@ -121,7 +121,7 @@ def fixTimeSig(result):
         # now that we've processed all the tempo changes, calculate the amount of time it takes to get from the most
         # recent tempo change event to the timesig event.
         deltaTicks = timesig["start"] - ticksElapsed
-        deltaTime += tick2second(deltaTicks, TICKS_PER_BEAT, currentTempo)
+        deltaTime += tick2second(deltaTicks, ticksPerBeat, currentTempo)
 
         # update total time elapsed with our deltaTime
         timeElapsed += deltaTime
@@ -140,7 +140,7 @@ def fixTempoTime(result):
     for currTempoIndex in range(len(tempotrack)):
         # calculated how many ticks, and by extension, seconds, have passed since the last tempo update
         ticksElapsed = tempotrack[currTempoIndex]["start"] - prevStartTimeTicks
-        deltaTime = tick2second(ticksElapsed, TICKS_PER_BEAT, prevTempo)
+        deltaTime = tick2second(ticksElapsed, ticksPerBeat, prevTempo)
         timeElapsed += deltaTime
 
         # the current becomes the previous for the next iteration
@@ -249,9 +249,9 @@ def parseMidi(filename):
 
         # Finds the name of the current track
         if "ticks_per_beat" in line:
-            global TICKS_PER_BEAT
+            global ticksPerBeat
             ticksperbeatmatch = re.search(r"ticks_per_beat=(\d+)", line)
-            TICKS_PER_BEAT = int(ticksperbeatmatch.group(1))
+            ticksPerBeat = int(ticksperbeatmatch.group(1))
 
         # Finds the name of the current track
         if "track_name" in line:
