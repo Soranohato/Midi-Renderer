@@ -231,7 +231,7 @@ func generate_notes(measurestart, measureend, track_index):
 		notecolor = track_colors[track_index % track_colors.size()]
 		
 	# initialize all the carry-over notes from the previous measure
-	var prevcarriedover = carryovernotes[track_index].duplicate(true)
+	var prevcarriedover = carryovernotes[track_index].duplicate(false)
 	carryovernotes[track_index].clear() # clear the array so that notes can be carried over again
 	
 	for note in prevcarriedover:
