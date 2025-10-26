@@ -33,7 +33,7 @@ To set which color will be assigned to each instrument simply go to the array be
 If you have less colors than instruments the color list will loop back to the first color and iterate through until all instruments are accounted for.
 
 ### Track Postition
-If you have an instrument that you would like to have its notes appear in a spot that does not correspond to its true midi position you can use this array. You can find it again by clicking NoteManager and scrolling down to transposes
+If you have an instrument that you would like to have its notes appear in a spot that does not correspond to its true midi position you can use this array. You can find it again by clicking NoteManager and scrolling down to transposes. This array behaves just like note color where each array element corresponds to the same number in "Tracks to Use". The number you set in the array is the number of semitones up or down you want to set the track to be moved. Positive numbers go up, negative numbers to go down.
 
 ### Background Color
 To change the background color simply click the ColorRect node and then where you see color change it to the color you want.
@@ -50,13 +50,14 @@ If you wish to only render certain tracks of your midi file that can also be don
 * Toggleable note effects
 * Easy conversion to verticle screen
 * Fix note overhang on left side of screen
+* Fix minor transpose bug
 
 # Contributing
 ***
 
 If you wish to contribute this project is open to the public, just make a pull request and my friend and I will review the code!
 
-# contributors
+# Contributors
 ***
 
 Soranohato, Rhishit Khare
